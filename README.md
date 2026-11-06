@@ -12,6 +12,18 @@ Copie **instantaneamente** a frase (legenda) que está na tela enquanto assiste 
 
 Extensão e app usam o **mesmo código de sincronização** (ex.: `lua-7K2Q9P`). Tudo o que é copiado na extensão aparece no app em menos de um segundo; favoritar ou apagar no app também reflete na extensão.
 
+## Prints do app
+
+| Conectar | Frases sincronizadas | Frase chegando ao vivo | Tema escuro |
+|---|---|---|---|
+| <img src="docs/prints/01-conectar.png" width="200"> | <img src="docs/prints/02-lista.png" width="200"> | <img src="docs/prints/04-frase-recebida.png" width="200"> | <img src="docs/prints/07-lista-escuro.png" width="200"> |
+
+| Busca | Favoritas |
+|---|---|
+| <img src="docs/prints/05-busca.png" width="200"> | <img src="docs/prints/06-favoritas.png" width="200"> |
+
+> Gerados automaticamente num emulador Android pelo workflow *Prints do app* (`.github/workflows/screenshots.yml`).
+
 ## Estrutura
 
 | Pasta        | O que é |
