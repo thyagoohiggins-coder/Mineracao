@@ -85,7 +85,9 @@ public class PhraseAdapter extends RecyclerView.Adapter<PhraseAdapter.Holder> {
         h.time.setText(time.isEmpty() ? "" : "⏱ " + time);
         h.time.setVisibility(time.isEmpty() ? View.GONE : View.VISIBLE);
 
-        h.date.setText(DateUtils.getRelativeTimeSpanString(p.createdAt, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS));
+        long now = System.currentTimeMillis();
+        // relógios do PC e do celular podem diferir alguns segundos: nunca mostrar "daqui a X minutos"
+        h.date.setText(DateUtils.getRelativeTimeSpanString(Math.min(p.createdAt, now), now, DateUtils.MINUTE_IN_MILLIS));
 
         h.favorite.setText(p.favorite ? "★" : "☆");
         h.favorite.setTextColor(p.favorite ? Color.parseColor("#FBBF24") : h.date.getCurrentTextColor());
