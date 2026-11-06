@@ -72,6 +72,7 @@ Testes locais (sobe o Worker com `wrangler dev`): `npm test`.
 
 Serviços: **Netflix, YouTube, Disney+, Max (HBO), Prime Video, Globoplay, Paramount+, Crunchyroll, Apple TV+** e, em geral, **qualquer site com vídeo legendado**. A detecção combina seletores conhecidos de cada serviço, legendas nativas do HTML5, players dentro de *shadow DOM* e uma busca genérica por elementos de legenda sobre o vídeo.
 Se nenhuma legenda for encontrada, o Alt+C copia o texto que você tiver selecionado.
+Em **redes sociais** (Instagram, Facebook, TikTok, X, Threads…) a extensão fica **desligada por padrão**; em sites que não são de streaming, o botão só aparece depois que uma legenda é detectada. O menu da extensão tem a chave **“Ativa em <site>”** para ligar/desligar em qualquer site (lista padrão em `extension/sites.js`).
 Cada frase vai com o nome do filme/série, o serviço, o minuto do vídeo e o link (no YouTube, o link já abre no segundo exato da fala).
 
 > Os sites de streaming mudam o HTML com frequência. Se algum parar de funcionar, os seletores ficam no topo de `extension/content.js` (lista `SITES`). Depois de instalar ou atualizar a extensão, as abas já abertas passam a funcionar sem precisar recarregar.

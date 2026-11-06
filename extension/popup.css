@@ -37,6 +37,8 @@ svg { width: 16px; height: 16px; fill: currentColor; flex: 0 0 auto; }
 .tab p { color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
 .tab p q { color: var(--fg); }
 
+.site-row { margin: 8px 2px 0; color: var(--muted); }
+.site-row b { color: var(--fg); font-weight: 600; }
 .primary { width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: var(--accent-fg); border: 0; border-radius: 10px; padding: 10px; font-weight: 600; }
 .primary:hover { filter: brightness(1.06); }
 

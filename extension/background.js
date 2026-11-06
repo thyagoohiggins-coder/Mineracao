@@ -117,7 +117,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 async function injectIntoOpenTabs() {
   const tabs = await chrome.tabs.query({ url: ['http://*/*', 'https://*/*'] });
   for (const tab of tabs) {
-    chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['content.js'] }).catch(() => {});
+    chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['sites.js', 'content.js'] }).catch(() => {});
   }
 }
 

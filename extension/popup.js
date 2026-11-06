@@ -55,17 +55,38 @@ async function checkTab() {
   if (!tab || !/^https?:/.test(tab.url || '')) {
     set('', 'play', 'Abra um vídeo para começar', 'Netflix, Disney+, Max, Prime Video, YouTube e outros.');
     $('copyNow').hidden = true;
+    $('siteRow').hidden = true;
+    return;
+  }
+
+  // Chave "Ativa neste site"
+  const host = EP_SITES.hostKey(new URL(tab.url).hostname);
+  const { sitePrefs = {} } = await chrome.storage.local.get('sitePrefs');
+  const siteBlocked = EP_SITES.isBlocked(host, sitePrefs);
+  $('siteRow').hidden = false;
+  $('siteHost').textContent = host;
+  $('siteEnabled').checked = !siteBlocked;
+  $('siteEnabled').onchange = async (e) => {
+    const { sitePrefs: prefs = {} } = await chrome.storage.local.get('sitePrefs');
+    prefs[host] = e.target.checked;
+    await chrome.storage.local.set({ sitePrefs: prefs });
+    setTimeout(checkTab, 500);
+  };
+  if (siteBlocked) {
+    set('', 'play', 'Desativada neste site', 'Ligue a chave abaixo para salvar frases aqui.');
+    $('copyNow').hidden = true;
     return;
   }
   let st = null;
   try { st = await chrome.tabs.sendMessage(tab.id, { type: 'status' }); } catch { /* sem script na aba */ }
   if (!st) {
     try {
-      await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['content.js'] });
+      await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['sites.js', 'content.js'] });
       await new Promise((r) => setTimeout(r, 400));
       st = await chrome.tabs.sendMessage(tab.id, { type: 'status' });
     } catch { /* página protegida */ }
   }
+  if (st && st.blocked) st = null; // ainda aplicando a escolha recém-feita
   if (!st) {
     set('', 'play', 'Nenhum vídeo nesta aba', 'Dê play no vídeo e abra este menu de novo.');
     $('copyNow').hidden = true;

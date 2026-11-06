@@ -167,16 +167,31 @@
     return (h ? `${h}:${String(m).padStart(2, '0')}` : `${m}`) + `:${String(sec).padStart(2, '0')}`;
   };
 
+  // ---------- Ativa neste site? (redes sociais ficam desligadas por padrão) ----------
+  const topHost = (() => {
+    try { if (location.ancestorOrigins && location.ancestorOrigins.length) return new URL(location.ancestorOrigins[location.ancestorOrigins.length - 1]).hostname; } catch { /* ignore */ }
+    try { return window.top.location.hostname; } catch { return location.hostname; }
+  })();
+  const SITES_CFG = globalThis.EP_SITES || { isBlocked: () => false };
+  let blocked = SITES_CFG.isBlocked(topHost, {});
+  try {
+    chrome.storage.local.get({ sitePrefs: {} }, (c) => { blocked = SITES_CFG.isBlocked(topHost, c.sitePrefs); });
+    chrome.storage.onChanged.addListener((ch) => { if (ch.sitePrefs) blocked = SITES_CFG.isBlocked(topHost, ch.sitePrefs.newValue); });
+  } catch { /* extensão recarregada */ }
+
   // ---------- Histórico das últimas falas ----------
   const HISTORY_MAX = 20;
   const history = []; // { text, videoTime, at }
   let current = '';
-  let hasVideo = false;
+  let hasVideo = false;     // há vídeo E a extensão está ativa neste site
+  let videoPresent = false; // há vídeo (mesmo com a extensão desligada aqui)
 
   function tick() {
     if (!alive()) return;
     const v = mainVideo();
-    hasVideo = !!v;
+    videoPresent = !!v;
+    hasVideo = !!v && !blocked;
+    if (blocked) { current = ''; ui.hide(); return; }
     const t = v ? currentSubtitle() : '';
     if (t === current) return;
     current = t;
@@ -337,10 +352,12 @@
 
     function showBar() {
       if (!enabled || !showBtn || !hasVideo) return;
+      if (site.id === 'outro' && !history.length) return; // site genérico: só com legenda detectada
       attach();
       bar.classList.add('show');
+      host.dataset.bar = 'on';
       clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => bar.classList.remove('show'), 2500);
+      hideTimer = setTimeout(() => { bar.classList.remove('show'); host.dataset.bar = 'off'; }, 2500);
     }
     document.addEventListener('mousemove', showBar, { passive: true });
 
@@ -397,8 +414,16 @@
       document.removeEventListener('webkitfullscreenchange', onFs);
     });
 
+    function hide() {
+      if (!host.parentNode) return;
+      bar.classList.remove('show');
+      panel.classList.remove('open');
+      toastEl.classList.remove('show');
+      host.dataset.bar = 'off';
+    }
+
     return {
-      toast, togglePanel,
+      toast, togglePanel, hide,
       get enabled() { return enabled; },
       update() { if (panel.classList.contains('open')) renderPanel(); },
     };
@@ -422,7 +447,11 @@
 
   // Mensagens do popup / atalho global. Só responde o frame que tem vídeo.
   const onMessage = (msg, _sender, sendResponse) => {
-    if (!msg || !hasVideo) return false;
+    if (!msg || !videoPresent) return false;
+    if (blocked) {
+      if (msg.type === 'status') sendResponse({ site: site.name, video: true, blocked: true });
+      return false;
+    }
     if (msg.type === 'copy-now') { copyPhrase(); return false; }
     if (msg.type === 'status') {
       sendResponse({ site: site.name, video: true, subtitle: currentSubtitle(), captured: history.length });

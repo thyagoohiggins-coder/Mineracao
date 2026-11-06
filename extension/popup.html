@@ -34,6 +34,10 @@
       <p id="tabDetail"></p>
     </div>
   </section>
+  <label class="switch site-row" id="siteRow" hidden>
+    <input type="checkbox" id="siteEnabled"><span class="track"></span>
+    <span>Ativa em <b id="siteHost"></b></span>
+  </label>
   <button id="copyNow" class="primary" hidden>
     <svg><use href="#i-quote"/></svg>Salvar frase da tela
   </button>
@@ -76,6 +80,7 @@
 
   <footer><kbd>Alt</kbd><kbd>C</kbd> salvar frase <span class="dot">·</span> <kbd>Alt</kbd><kbd>X</kbd> últimas falas</footer>
   <script src="config.js"></script>
+  <script src="sites.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
