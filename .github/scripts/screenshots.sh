@@ -2,9 +2,26 @@
 # Roda dentro do emulador (android-emulator-runner): instala o app e tira os prints.
 set -euxo pipefail
 PKG=com.cinefrases.app
-OUT=screenshots
+OUT=docs/prints
 mkdir -p "$OUT"
 shot() { sleep "${2:-3}"; adb exec-out screencap -p > "$OUT/$1.png"; }
+# Toca no centro do elemento cujo atributo casa com o valor (ex.: resource-id ... ou text ...)
+tap() {
+  adb shell uiautomator dump /sdcard/ui.xml > /dev/null
+  adb shell cat /sdcard/ui.xml > /tmp/ui.xml
+  read -r x y < <(python3 - "$1" "$2" <<'PY'
+import re, sys, xml.etree.ElementTree as ET
+attr, val = sys.argv[1], sys.argv[2]
+for n in ET.parse('/tmp/ui.xml').iter('node'):
+    if n.get(attr) == val:
+        x1, y1, x2, y2 = map(int, re.findall(r'\d+', n.get('bounds')))
+        print((x1 + x2) // 2, (y1 + y2) // 2); break
+else:
+    sys.exit(f'elemento {attr}={val} nao encontrado')
+PY
+)
+  adb shell input tap "$x" "$y"
+}
 
 # Barra de status "limpa" (modo demonstração)
 adb shell settings put global sysui_demo_allowed 1
@@ -41,12 +58,8 @@ shot 03-frase-ao-vivo 0.25
 shot 04-frase-recebida 2
 
 # 4) Busca
-adb shell input keyevent KEYCODE_SEARCH || true
-adb shell uiautomator dump /sdcard/ui.xml
-adb shell cat /sdcard/ui.xml > /tmp/ui.xml
-bounds=$(grep -o 'resource-id="'$PKG':id/searchInput"[^>]*bounds="[^"]*"' /tmp/ui.xml | grep -o 'bounds="[^"]*"' | grep -o '[0-9]\+' | tr '\n' ' ')
-read -r x1 y1 x2 y2 <<< "$bounds"
-adb shell input tap $(((x1+x2)/2)) $(((y1+y2)/2))
+tap resource-id "$PKG:id/searchInput" || echo "busca: campo não encontrado"
+sleep 1
 adb shell input text "coragem"
 adb shell input keyevent KEYCODE_BACK   # fecha o teclado
 shot 05-busca 2
@@ -55,11 +68,7 @@ shot 05-busca 2
 adb shell am force-stop $PKG
 adb shell am start -W -n $PKG/.MainActivity
 sleep 4
-adb shell uiautomator dump /sdcard/ui.xml
-adb shell cat /sdcard/ui.xml > /tmp/ui.xml
-fav=$(grep -o 'text="★ Favoritas"[^>]*bounds="[^"]*"' /tmp/ui.xml | grep -o 'bounds="[^"]*"' | grep -o '[0-9]\+' | tr '\n' ' ')
-read -r x1 y1 x2 y2 <<< "$fav"
-adb shell input tap $(((x1+x2)/2)) $(((y1+y2)/2))
+tap text "★ Favoritas" || echo "filtro: chip não encontrado"
 shot 06-favoritas 2
 
 # 6) Tema escuro

@@ -8,6 +8,9 @@ on:
       - '.github/workflows/screenshots.yml'
       - '.github/scripts/**'
 
+permissions:
+  contents: write   # para salvar os prints em docs/prints
+
 jobs:
   screenshots:
     runs-on: ubuntu-latest
@@ -54,4 +57,14 @@ jobs:
         if: always()
         with:
           name: prints-do-app
-          path: screenshots/
+          path: docs/prints/
+
+      - name: Salvar prints no repositório
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/prints
+          git diff --cached --quiet && exit 0
+          git commit -m "Prints do app Android (gerados pelo CI) [skip ci]"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
