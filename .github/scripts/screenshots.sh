@@ -4,7 +4,9 @@ set -euxo pipefail
 PKG=com.estudosplus.app
 OUT=docs/prints
 mkdir -p "$OUT"
-shot() { sleep "${2:-3}"; adb exec-out screencap -p > "$OUT/$1.png"; }
+# Fecha avisos do sistema (ex.: "Pixel Launcher isn't responding" do emulador lento) antes de cada print
+quiet() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null 2>&1 || true; }
+shot() { sleep "${2:-3}"; quiet; sleep 0.3; adb exec-out screencap -p > "$OUT/$1.png"; }
 # Toca no centro do elemento cujo atributo casa com o valor (ex.: resource-id ... ou text ...)
 tap() {
   adb shell uiautomator dump /sdcard/ui.xml > /dev/null
@@ -22,6 +24,13 @@ PY
 )
   adb shell input tap "$x" "$y"
 }
+
+# Emulador lento: esconde diálogos de "não está respondendo" e espera o sistema estabilizar
+adb shell settings put global hide_error_dialogs 1 || true
+adb shell settings put secure anr_show_background 0 || true
+adb shell input keyevent KEYCODE_HOME
+sleep 25
+quiet
 
 # Barra de status "limpa" (modo demonstração)
 adb shell settings put global sysui_demo_allowed 1
