@@ -173,19 +173,11 @@
             android:paddingHorizontal="40dp"
             android:visibility="gone">
 
-            <FrameLayout
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:background="@drawable/empty_circle">
-
-                <ImageView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="center"
-                    android:contentDescription="@null"
-                    android:src="@drawable/ic_quote"
-                    app:tint="?attr/colorPrimary" />
-            </FrameLayout>
+            <ImageView
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:contentDescription="@null"
+                android:src="@drawable/panda" />
 
             <TextView
                 android:id="@+id/emptyTitle"

@@ -285,8 +285,8 @@
         button { all: unset; cursor: pointer; color: inherit; border-radius: 8px; height: 32px; padding: 0 10px; font-size: 13px; font-weight: 600;
           display: inline-flex; gap: 8px; align-items: center; transition: background .15s; }
         button:hover { background: rgba(255,255,255,.10); }
-        button:focus-visible { outline: 2px solid #818cf8; outline-offset: 1px; }
-        .copy .ic { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: #4f46e5; color: #fff; }
+        button:focus-visible { outline: 2px solid #5eead4; outline-offset: 1px; }
+        .copy .ic { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #22c55e, #0891b2); color: #fff; }
         .copy .ic svg { width: 14px; height: 14px; }
         kbd { font: 600 10.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.18); border-radius: 5px; padding: 3px 5px; }
         .sep { width: 1px; height: 18px; background: rgba(255,255,255,.12); margin: 0 2px; }

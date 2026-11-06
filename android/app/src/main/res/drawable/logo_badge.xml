@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Logo para usar dentro do app (fundo arredondado + símbolo) -->
+<!-- Logo dentro do app: fundo degradê arredondado + Bambu -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="14dp" />
-            <gradient android:angle="315" android:startColor="#6366F1" android:endColor="#4338CA" />
+            <gradient android:angle="315" android:startColor="#4ADE80" android:endColor="#06B6D4" />
         </shape>
     </item>
-    <item android:drawable="@drawable/ic_launcher_foreground" />
+    <item android:bottom="3dp" android:left="3dp" android:right="3dp" android:top="3dp" android:drawable="@drawable/panda" />
 </layer-list>
