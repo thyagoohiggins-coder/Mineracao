@@ -12,9 +12,9 @@ function randomCode() {
 }
 const api = (c) => `${CINEFRASES_SERVER}/api/rooms/${encodeURIComponent(c)}`;
 
-function setStatus(kind, label) {
-  $('status').className = `pill ${kind}`;
-  $('status').querySelector('b').textContent = label;
+function setStatus(ok) {
+  $('status').className = `dot ${ok ? 'ok' : 'err'}`;
+  $('status').title = ok ? 'Sincronizado com o app' : 'Sem conexão — as frases serão enviadas depois';
 }
 
 function fmtTime(s) {
@@ -23,7 +23,7 @@ function fmtTime(s) {
   return (h ? `${h}:${String(m).padStart(2, '0')}` : m) + `:${String(sec).padStart(2, '0')}`;
 }
 
-// ---------- Código ----------
+// ---------- Código (tela "Conectar o app") ----------
 async function loadCode() {
   let { syncCode } = await chrome.storage.sync.get('syncCode');
   if (!syncCode) {
@@ -34,6 +34,12 @@ async function loadCode() {
   $('code').textContent = code;
 }
 
+function showConnect(on) {
+  $('home').hidden = on;
+  $('connect').hidden = !on;
+  editMode(false);
+}
+
 function editMode(on) {
   $('codeView').hidden = on;
   $('codeEdit').hidden = !on;
@@ -41,66 +47,22 @@ function editMode(on) {
   if (on) { $('codeInput').value = code; $('codeInput').select(); $('codeInput').focus(); }
 }
 
-// ---------- Diagnóstico da aba ----------
-async function checkTab() {
-  const box = $('tab');
-  const set = (kind, icon, title, detail) => {
-    box.className = `tab ${kind}`;
-    $('tabIcon').setAttribute('href', `#i-${icon}`);
-    $('tabTitle').textContent = title;
-    $('tabDetail').textContent = '';
-    if (detail instanceof Node) $('tabDetail').appendChild(detail); else $('tabDetail').textContent = detail || '';
-  };
+// ---------- Chave "Ativa em <site>" ----------
+async function setupSiteToggle() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !/^https?:/.test(tab.url || '')) {
-    set('', 'play', 'Abra um vídeo para começar', 'Netflix, Disney+, Max, Prime Video, YouTube e outros.');
-    $('copyNow').hidden = true;
-    $('siteRow').hidden = true;
-    return;
-  }
-
-  // Chave "Ativa neste site"
+  if (!tab || !/^https?:/.test(tab.url || '')) return;
   const host = EP_SITES.hostKey(new URL(tab.url).hostname);
   const { sitePrefs = {} } = await chrome.storage.local.get('sitePrefs');
-  const siteBlocked = EP_SITES.isBlocked(host, sitePrefs);
   $('siteRow').hidden = false;
   $('siteHost').textContent = host;
-  $('siteEnabled').checked = !siteBlocked;
+  $('siteEnabled').checked = !EP_SITES.isBlocked(host, sitePrefs);
   $('siteEnabled').onchange = async (e) => {
     const { sitePrefs: prefs = {} } = await chrome.storage.local.get('sitePrefs');
     prefs[host] = e.target.checked;
     await chrome.storage.local.set({ sitePrefs: prefs });
-    setTimeout(checkTab, 500);
   };
-  if (siteBlocked) {
-    set('', 'play', 'Desativada neste site', 'Ligue a chave abaixo para salvar frases aqui.');
-    $('copyNow').hidden = true;
-    return;
-  }
-  let st = null;
-  try { st = await chrome.tabs.sendMessage(tab.id, { type: 'status' }); } catch { /* sem script na aba */ }
-  if (!st) {
-    try {
-      await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['sites.js', 'content.js'] });
-      await new Promise((r) => setTimeout(r, 400));
-      st = await chrome.tabs.sendMessage(tab.id, { type: 'status' });
-    } catch { /* página protegida */ }
-  }
-  if (st && st.blocked) st = null; // ainda aplicando a escolha recém-feita
-  if (!st) {
-    set('', 'play', 'Nenhum vídeo nesta aba', 'Dê play no vídeo e abra este menu de novo.');
-    $('copyNow').hidden = true;
-  } else if (st.subtitle) {
-    const q = document.createElement('q');
-    q.textContent = st.subtitle.length > 120 ? st.subtitle.slice(0, 120) + '…' : st.subtitle;
-    set('ok', 'check', `Legenda detectada · ${st.site}`, q);
-    $('copyNow').hidden = false;
-  } else {
-    set('warn', 'alert', `Vídeo encontrado · ${st.site}`, st.captured
-      ? 'Nenhuma legenda na tela agora (aparece quando alguém fala).'
-      : 'Ative as legendas (CC) no player para poder copiar as frases.');
-    $('copyNow').hidden = !st.captured;
-  }
+  // Garante o script na aba (ex.: aberta antes da instalação)
+  chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['sites.js', 'content.js'] }).catch(() => {});
 }
 
 // ---------- Lista ----------
@@ -110,11 +72,12 @@ function render(phrases) {
   if (!phrases.length) {
     const li = document.createElement('li');
     li.className = 'empty';
-    li.textContent = 'Nenhuma frase ainda. Abra um vídeo com legenda e pressione Alt+C.';
+    li.textContent = 'Nenhuma frase ainda.\nAbra um vídeo com legenda e pressione Alt+C.';
+    li.style.whiteSpace = 'pre-line';
     list.appendChild(li);
     return;
   }
-  for (const p of phrases.slice(0, 20)) {
+  for (const p of phrases.slice(0, 30)) {
     const li = document.createElement('li');
     li.title = 'Clique para copiar';
     const t = document.createElement('span'); t.className = 't'; t.textContent = p.text;
@@ -125,7 +88,8 @@ function render(phrases) {
     li.addEventListener('click', async () => {
       await navigator.clipboard.writeText(p.text);
       m.textContent = 'Copiada';
-      setTimeout(() => { m.textContent = meta(); }, 1200);
+      m.classList.add('copied');
+      setTimeout(() => { m.textContent = meta(); m.classList.remove('copied'); }, 1200);
     });
     list.appendChild(li);
   }
@@ -134,16 +98,16 @@ function render(phrases) {
 async function refresh() {
   const { recent = [], queue = [] } = await chrome.storage.local.get(['recent', 'queue']);
   $('pending').hidden = !queue.length;
-  $('pending').textContent = `${queue.length} pendente${queue.length > 1 ? 's' : ''}`;
+  $('pending').textContent = `${queue.length} frase${queue.length > 1 ? 's' : ''} aguardando conexão`;
   try {
     const r = await fetch(`${api(code)}/phrases`);
     if (!r.ok) throw new Error();
     const { phrases } = await r.json();
-    setStatus('ok', 'sincronizado');
+    setStatus(true);
     render([...queue.map((p) => ({ ...p, synced: false })), ...phrases]);
     listen();
   } catch {
-    setStatus('err', 'sem conexão');
+    setStatus(false);
     render(recent);
   }
 }
@@ -155,23 +119,25 @@ function listen() {
   let t;
   const again = () => { clearTimeout(t); t = setTimeout(refresh, 150); };
   for (const ev of ['add', 'update', 'delete']) es.addEventListener(ev, again);
-  es.onerror = () => setStatus('err', 'sem conexão');
-  es.onopen = () => setStatus('ok', 'sincronizado');
+  es.onerror = () => setStatus(false);
+  es.onopen = () => setStatus(true);
 }
 
 async function init() {
   await loadCode();
-  const local = await chrome.storage.local.get({ enabled: true, showButton: true });
-  $('enabled').checked = local.enabled;
+  const local = await chrome.storage.local.get({ showButton: true });
   $('showButton').checked = local.showButton;
+  $('showButton').onchange = (e) => chrome.storage.local.set({ showButton: e.target.checked });
 
+  $('openConnect').onclick = () => showConnect(true);
+  $('closeConnect').onclick = () => showConnect(false);
   $('copyCode').onclick = async () => {
     await navigator.clipboard.writeText(code);
     const label = $('copyCode').querySelector('span');
     label.textContent = 'Copiado';
     setTimeout(() => (label.textContent = 'Copiar'), 1200);
   };
-  $('editCode').onclick = (e) => { e.preventDefault(); editMode(true); };
+  $('editCode').onclick = () => editMode(true);
   $('cancelEdit').onclick = () => editMode(false);
   $('genCode').onclick = () => { $('codeInput').value = randomCode(); };
   $('codeEdit').onsubmit = async (e) => {
@@ -186,16 +152,9 @@ async function init() {
     await chrome.runtime.sendMessage({ type: 'flush' }).catch(() => {});
     refresh();
   };
-  $('copyNow').onclick = async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab) await chrome.tabs.sendMessage(tab.id, { type: 'copy-now' }).catch(() => {});
-    setTimeout(() => window.close(), 300);
-  };
-  $('enabled').onchange = (e) => chrome.storage.local.set({ enabled: e.target.checked });
-  $('showButton').onchange = (e) => chrome.storage.local.set({ showButton: e.target.checked });
 
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && (ch.recent || ch.queue)) refresh(); });
   refresh();
-  checkTab();
+  setupSiteToggle();
 }
 init();

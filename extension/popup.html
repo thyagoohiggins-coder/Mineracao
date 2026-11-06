@@ -7,58 +7,43 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <!-- Ícones (sprite) -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></symbol>
-    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 1 0 10-10zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></symbol>
-    <symbol id="i-play" viewBox="0 0 24 24"><path d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></symbol>
-    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></symbol>
     <symbol id="i-phone" viewBox="0 0 24 24"><path d="M17 1.01 7 1a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3a2 2 0 0 0-2-1.99zM17 19H7V5h10v14z"/></symbol>
-    <symbol id="i-quote" viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></symbol>
   </svg>
 
   <header class="top">
-    <img src="icons/logo.svg" alt="" width="32" height="32">
-    <div class="brand">
-      <h1>Estudos Plus</h1>
-      <span class="sub">Frases de filmes e séries</span>
-    </div>
-    <span id="status" class="pill"><i></i><b>…</b></span>
+    <img src="icons/logo.svg" alt="" width="28" height="28">
+    <h1>Estudos Plus</h1>
+    <span id="status" class="dot" title="…"></span>
+    <button id="openConnect" class="icon" title="Conectar o app do celular" aria-label="Conectar o app do celular">
+      <svg><use href="#i-phone"/></svg>
+    </button>
   </header>
 
-  <!-- Diagnóstico da aba atual -->
-  <section id="tab" class="tab">
-    <svg class="tab-ic"><use id="tabIcon" href="#i-play"/></svg>
-    <div class="tab-body">
-      <strong id="tabTitle">Verificando esta aba…</strong>
-      <p id="tabDetail"></p>
-    </div>
-  </section>
-  <label class="switch site-row" id="siteRow" hidden>
-    <input type="checkbox" id="siteEnabled"><span class="track"></span>
-    <span>Ativa em <b id="siteHost"></b></span>
-  </label>
-  <button id="copyNow" class="primary" hidden>
-    <svg><use href="#i-quote"/></svg>Salvar frase da tela
-  </button>
+  <!-- Tela principal: frases -->
+  <main id="home">
+    <ul id="list"></ul>
+    <p id="pending" class="pending" hidden></p>
+  </main>
 
-  <!-- Código de sincronização -->
-  <section class="code-card">
+  <!-- Tela secundária: conectar o app -->
+  <section id="connect" hidden>
+    <button id="closeConnect" class="link"><svg><use href="#i-back"/></svg>Voltar</button>
+    <h2>Conectar o app do celular</h2>
+    <p class="muted">No app Estudos Plus, digite este código:</p>
     <div id="codeView">
-      <div class="code-head">
-        <span class="label"><svg><use href="#i-phone"/></svg>Código para o app</span>
-        <a href="#" id="editCode">Alterar</a>
-      </div>
       <div class="code-row">
         <code id="code">…</code>
         <button id="copyCode" class="btn" title="Copiar código"><svg><use href="#i-copy"/></svg><span>Copiar</span></button>
       </div>
-      <p class="hint">Digite este código no app Estudos Plus do celular.</p>
+      <button id="editCode" class="link small">Usar outro código</button>
     </div>
     <form id="codeEdit" hidden>
-      <span class="label">Código de sincronização</span>
       <input id="codeInput" placeholder="ex.: lua-7K2Q9P" autocomplete="off" spellcheck="false" maxlength="64">
-      <p class="hint error" id="codeError" hidden>Use de 4 a 64 letras, números, “-” ou “_”.</p>
+      <p class="error" id="codeError" hidden>Use de 4 a 64 letras, números, “-” ou “_”.</p>
       <div class="row">
         <button type="button" id="genCode" class="btn">Gerar novo</button>
         <span class="grow"></span>
@@ -68,17 +53,14 @@
     </form>
   </section>
 
-  <section>
-    <h2>Últimas frases <span id="pending" class="pending" hidden></span></h2>
-    <ul id="list"></ul>
-  </section>
+  <footer>
+    <div class="toggles">
+      <label class="switch" id="siteRow" hidden><input type="checkbox" id="siteEnabled"><span class="track"></span><span>Ativa em <b id="siteHost"></b></span></label>
+      <label class="switch"><input type="checkbox" id="showButton"><span class="track"></span><span>Botão no vídeo</span></label>
+    </div>
+    <p class="keys"><kbd>Alt</kbd><kbd>C</kbd> salvar frase <span>·</span> <kbd>Alt</kbd><kbd>X</kbd> últimas falas</p>
+  </footer>
 
-  <section class="settings">
-    <label class="switch"><input type="checkbox" id="enabled"><span class="track"></span>Ativa</label>
-    <label class="switch"><input type="checkbox" id="showButton"><span class="track"></span>Botão no vídeo</label>
-  </section>
-
-  <footer><kbd>Alt</kbd><kbd>C</kbd> salvar frase <span class="dot">·</span> <kbd>Alt</kbd><kbd>X</kbd> últimas falas</footer>
   <script src="config.js"></script>
   <script src="sites.js"></script>
   <script src="popup.js"></script>

@@ -57,8 +57,7 @@ Testes locais (sobe o Worker com `wrangler dev`): `npm test`.
 1. Abra `chrome://extensions` (ou `edge://extensions`).
 2. Ative o **Modo do desenvolvedor**.
 3. Clique em **Carregar sem compactação** e selecione a pasta `extension/`.
-4. Clique no ícone do Estudos Plus: o seu **código** (ex.: `lua-7K2Q9P`) já aparece, criado automaticamente. É só digitar esse código no app.
-   O menu também mostra se a legenda da aba atual está sendo detectada.
+4. Clique no ícone do Estudos Plus e depois no **ícone de celular** (canto superior direito): aparece o seu **código** (ex.: `lua-7K2Q9P`), criado automaticamente. É só digitar esse código no app.
 
 ### Como usar
 
