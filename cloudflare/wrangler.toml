@@ -1,0 +1,14 @@
+# CineFrases — servidor de sincronização na Cloudflare
+name = "cinefrases"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Um Durable Object por código de sincronização: guarda as frases
+# e mantém as conexões em tempo real (SSE) do app e da extensão.
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]

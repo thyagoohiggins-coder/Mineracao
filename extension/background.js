@@ -1,8 +1,9 @@
 // CineFrases — service worker
 // Recebe as frases do content script, envia ao servidor e mantém uma fila offline.
 'use strict';
+importScripts('config.js');
 
-const DEFAULTS = { serverUrl: 'http://localhost:3000', syncCode: '' };
+const DEFAULTS = { serverUrl: CINEFRASES_SERVER, syncCode: '' };
 const RECENT_MAX = 50;
 
 async function getConfig() {
@@ -51,7 +52,7 @@ async function flushQueue() {
   try {
     const cfg = await getConfig();
     let { queue = [] } = await chrome.storage.local.get('queue');
-    if (!cfg.syncCode || !queue.length) return updateBadge(queue.length);
+    if (!cfg.syncCode || cfg.serverUrl.includes(CINEFRASES_PLACEHOLDER) || !queue.length) return updateBadge(queue.length);
     const sent = [];
     for (const p of queue) {
       try { await postPhrase(cfg, p); sent.push(p.id); } catch { break; } // servidor fora do ar: tenta depois
@@ -69,7 +70,7 @@ async function flushQueue() {
 
 async function savePhrase(phrase) {
   const cfg = await getConfig();
-  if (!cfg.syncCode) {
+  if (!cfg.syncCode || cfg.serverUrl.includes(CINEFRASES_PLACEHOLDER)) {
     await addRecent(phrase, false);
     await enqueue(phrase);
     return { ok: true, synced: false, reason: 'no-code' };

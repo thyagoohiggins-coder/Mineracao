@@ -22,11 +22,11 @@
     <small>Use o mesmo código no app Android para os dois ficarem sincronizados.</small>
 
     <details>
-      <summary>Avançado</summary>
+      <summary>Servidor</summary>
       <label>Endereço do servidor
-        <input id="server" placeholder="http://localhost:3000" spellcheck="false">
+        <input id="server" placeholder="https://cinefrases.SEU-USUARIO.workers.dev" spellcheck="false">
       </label>
-      <small>No celular, use o IP do computador na rede (ex.: http://192.168.0.10:3000).</small>
+      <small>O endereço do seu Worker na Cloudflare (aparece ao rodar <b>npm run deploy</b>).</small>
     </details>
 
     <div class="row">
@@ -45,6 +45,7 @@
   </section>
 
   <footer><kbd>Alt</kbd>+<kbd>C</kbd> copia a frase da tela · <kbd>Alt</kbd>+<kbd>X</kbd> mostra as últimas falas</footer>
+  <script src="config.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

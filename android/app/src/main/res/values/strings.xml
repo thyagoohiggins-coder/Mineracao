@@ -3,15 +3,16 @@
     <string name="app_name">CineFrases</string>
     <string name="setup_subtitle">Receba aqui, em tempo real, as frases que você copia com a extensão enquanto assiste Netflix, Disney+, Max, Prime Video, YouTube…</string>
     <string name="server_hint">Endereço do servidor</string>
-    <string name="server_help">O IP do computador onde o servidor está rodando, ex.: http://192.168.0.10:3000</string>
+    <string name="server_help">O endereço do seu Worker na Cloudflare, ex.: https://cinefrases.joao.workers.dev</string>
     <string name="code_hint">Código de sincronização</string>
     <string name="code_help">O mesmo código configurado na extensão</string>
     <string name="connect">Conectar</string>
     <string name="generate_code">Gerar código novo</string>
     <string name="error_server_empty">Informe o endereço do servidor.</string>
+    <string name="error_server_placeholder">Troque \"SEU-USUARIO\" pelo seu subdomínio workers.dev.</string>
     <string name="error_code_invalid">Código inválido: use de 4 a 64 letras, números, \"-\" ou \"_\".</string>
     <string name="server_unreachable_title">Servidor não respondeu</string>
-    <string name="server_unreachable_msg">Não foi possível falar com %1$s. Verifique se o servidor está rodando e se o celular está na mesma rede Wi-Fi do computador.</string>
+    <string name="server_unreachable_msg">Não foi possível falar com %1$s. Confira o endereço do Worker e a conexão com a internet.</string>
     <string name="save_anyway">Salvar mesmo assim</string>
     <string name="cancel">Cancelar</string>
 

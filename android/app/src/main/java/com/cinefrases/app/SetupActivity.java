@@ -36,7 +36,8 @@ public class SetupActivity extends AppCompatActivity {
         progress = findViewById(R.id.progress);
         errorText = findViewById(R.id.errorText);
 
-        serverInput.setText(Prefs.serverUrl(this));
+        String saved = Prefs.serverUrl(this);
+        serverInput.setText(saved.isEmpty() ? getString(R.string.default_server_url) : saved);
         codeInput.setText(Prefs.syncCode(this));
 
         findViewById(R.id.generateButton).setOnClickListener(v -> codeInput.setText(randomCode()));
@@ -50,6 +51,10 @@ public class SetupActivity extends AppCompatActivity {
 
         if (server.isEmpty()) {
             showError(getString(R.string.error_server_empty));
+            return;
+        }
+        if (server.contains(getString(R.string.server_placeholder))) {
+            showError(getString(R.string.error_server_placeholder));
             return;
         }
         if (!ApiClient.isValidCode(code)) {

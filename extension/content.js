@@ -156,7 +156,7 @@
 
     const sync = !res ? 'extensão desconectada — recarregue a página'
       : res.synced ? 'enviada para o app'
-      : res.reason === 'no-code' ? 'configure o código de sincronização'
+      : res.reason === 'no-code' ? 'configure a extensão (ícone do CineFrases)'
       : 'sem conexão — será enviada depois';
     ui.toast(`${copied ? 'Copiado' : 'Salvo'} ✓ ${sync}`, res && res.synced ? 'ok' : 'warn', entry.text);
   }

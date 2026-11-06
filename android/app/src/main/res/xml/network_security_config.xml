@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- O servidor costuma rodar no PC da rede local (http://192.168.x.x:3000), então HTTP é permitido. -->
+<!-- HTTPS (Cloudflare) é o padrão; HTTP fica liberado para quem roda o servidor no PC da rede local. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true" />
 </network-security-config>

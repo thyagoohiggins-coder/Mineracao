@@ -5,7 +5,7 @@ Copie **instantaneamente** a frase (legenda) que está na tela enquanto assiste 
 ```
  ┌───────────────────────┐      POST /phrases       ┌──────────────┐   tempo real (SSE)   ┌─────────────────┐
  │ Extensão do navegador │ ───────────────────────▶ │   Servidor   │ ───────────────────▶ │ App Android     │
- │ Netflix, Disney+, Max │ ◀─────────────────────── │  (Node.js)   │ ◀─────────────────── │ (Java)          │
+ │ Netflix, Disney+, Max │ ◀─────────────────────── │ (Cloudflare) │ ◀─────────────────── │ (Java)          │
  │ Prime, YouTube...     │   lista ao vivo (SSE)    └──────────────┘  favoritar / apagar  └─────────────────┘
  └───────────────────────┘
 ```
@@ -17,24 +17,37 @@ Extensão e app usam o **mesmo código de sincronização** (ex.: `lua-7K2Q9P`).
 | Pasta        | O que é |
 |--------------|---------|
 | `extension/` | Extensão para Chrome/Edge/Brave/Opera (Manifest V3) |
-| `server/`    | Servidor de sincronização em Node.js, **sem dependências** |
+| `cloudflare/`| Servidor de sincronização na **Cloudflare** (Workers + Durable Objects) — recomendado |
+| `server/`    | Mesmo servidor em Node.js, para rodar no seu PC (alternativa) |
 | `android/`   | App Android nativo em **Java** |
 
 ---
 
 ## 1. Servidor
 
-Requer Node.js 18+.
+### Cloudflare (recomendado)
+
+👉 **Siga o [TUTORIAL-CLOUDFLARE.md](TUTORIAL-CLOUDFLARE.md)** — são 3 comandos:
+
+```bash
+cd cloudflare
+npm install
+npx wrangler login
+npm run deploy
+```
+
+Você recebe um endereço como `https://cinefrases.SEU-USUARIO.workers.dev`, que vai na extensão e no app.
+Cada código de sincronização vira um *Durable Object* que guarda as frases (SQLite) e mantém as conexões em tempo real.
+Testes locais (sobe o Worker com `wrangler dev`): `npm test`.
+
+### Alternativa: no seu computador (Node.js 18+)
 
 ```bash
 cd server
 npm start
 ```
 
-Ele sobe em `http://0.0.0.0:3000` e salva as frases em `server/data/db.json`.
-Variáveis opcionais: `PORT`, `HOST`, `DATA_FILE`. Testes: `npm test`.
-
-> Para usar de qualquer lugar (fora da sua rede Wi-Fi), hospede o servidor em qualquer serviço que rode Node (Render, Railway, Fly.io, uma VPS…) e use o endereço público na extensão e no app.
+Sobe em `http://0.0.0.0:3000` e salva em `server/data/db.json`. No celular use o IP do PC (ex.: `http://192.168.0.10:3000`), na mesma rede Wi-Fi.
 
 ## 2. Extensão
 
@@ -42,7 +55,7 @@ Variáveis opcionais: `PORT`, `HOST`, `DATA_FILE`. Testes: `npm test`.
 2. Ative o **Modo do desenvolvedor**.
 3. Clique em **Carregar sem compactação** e selecione a pasta `extension/`.
 4. Clique no ícone do CineFrases → **Gerar** um código → **Salvar**.
-   (Em *Avançado* você troca o endereço do servidor; o padrão é `http://localhost:3000`.)
+   Em **Servidor**, cole o endereço do seu Worker (ou fixe ele em `extension/config.js`).
 
 ### Como usar
 
@@ -74,10 +87,8 @@ O APK fica em `android/app/build/outputs/apk/debug/app-debug.apk`. (minSdk 26 / 
 
 ### Conectando o app
 
-1. No computador, descubra o IP na rede (Windows: `ipconfig`; macOS/Linux: `ip addr` ou `ifconfig`), ex.: `192.168.0.10`.
-2. No app, informe o servidor `http://192.168.0.10:3000` e **o mesmo código** da extensão.
-3. Celular e computador precisam estar na mesma rede Wi-Fi (ou use um servidor hospedado na internet).
-   Se não conectar, libere a porta 3000 no firewall do computador.
+Na primeira tela, cole o endereço do servidor (o mesmo da extensão) e o **mesmo código** de sincronização, e toque em **Conectar**.
+Para já vir preenchido, troque o endereço em `android/app/src/main/res/values/config.xml`.
 
 ### O que o app faz
 

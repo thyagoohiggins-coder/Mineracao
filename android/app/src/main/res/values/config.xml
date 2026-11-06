@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Endereço padrão do servidor (seu Worker da Cloudflare).
+         Troque SEU-USUARIO pelo seu subdomínio workers.dev, ou digite o endereço na tela de conexão do app. -->
+    <string name="default_server_url" translatable="false">https://cinefrases.SEU-USUARIO.workers.dev</string>
+    <string name="server_placeholder" translatable="false">SEU-USUARIO</string>
+</resources>

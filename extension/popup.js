@@ -1,6 +1,6 @@
 'use strict';
 const $ = (id) => document.getElementById(id);
-const DEFAULTS = { serverUrl: 'http://localhost:3000', syncCode: '' };
+const DEFAULTS = { serverUrl: CINEFRASES_SERVER, syncCode: '' };
 let es = null;
 
 function randomCode() {
@@ -54,6 +54,12 @@ async function refresh() {
   $('pending').hidden = !queue.length;
   $('pending').textContent = `${queue.length} pendente${queue.length > 1 ? 's' : ''}`;
 
+  if (cfg.serverUrl.includes(CINEFRASES_PLACEHOLDER)) {
+    setStatus('warn', 'configure o servidor');
+    document.querySelector('details').open = true;
+    render(recent);
+    return;
+  }
   if (!cfg.syncCode) { setStatus('warn', 'sem código'); render(recent); return; }
   try {
     const r = await fetch(`${cfg.serverUrl}/api/rooms/${encodeURIComponent(cfg.syncCode)}/phrases`);
