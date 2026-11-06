@@ -1,4 +1,4 @@
-// CineFrases — servidor de sincronização na Cloudflare (Workers + Durable Objects).
+// Estudos Plus — servidor de sincronização na Cloudflare (Workers + Durable Objects).
 // Mesma API do servidor Node (server/server.js): a extensão e o app só precisam do endereço.
 import { DurableObject } from 'cloudflare:workers';
 
@@ -30,7 +30,7 @@ export default {
 
     if (pathname === '/' || pathname === '/api/health') {
       return withCors(json(200, { ok: true, name: 'cinefrases', time: Date.now(),
-        message: 'Servidor do CineFrases no ar. Use este endereço na extensão e no app Android.' }));
+        message: 'Servidor do Estudos Plus no ar. Use este endereço na extensão e no app Android.' }));
     }
 
     const m = pathname.match(/^\/api\/rooms\/([^/]+)\/(phrases|stream)(?:\/[^/]+)?$/);

@@ -1,15 +1,16 @@
-// CineFrases — content script
+// Estudos Plus — content script
 // Detecta a legenda que está na tela do player, guarda as últimas falas e copia/sincroniza com Alt+C ou pelo botão.
 (() => {
   'use strict';
 
   // Se a extensão foi recarregada, a instância antiga desta aba se desliga e esta assume.
   const INSTANCE = Math.random().toString(36).slice(2);
-  document.dispatchEvent(new CustomEvent('cinefrases:takeover', { detail: INSTANCE }));
+  // ('cinefrases:takeover' também desliga instâncias da versão antiga, de antes da troca de nome)
+  for (const ev of ['estudosplus:takeover', 'cinefrases:takeover']) document.dispatchEvent(new CustomEvent(ev, { detail: INSTANCE }));
   const cleanups = [];
-  document.addEventListener('cinefrases:takeover', function onTakeover(e) {
+  document.addEventListener('estudosplus:takeover', function onTakeover(e) {
     if (e.detail === INSTANCE) return;
-    document.removeEventListener('cinefrases:takeover', onTakeover);
+    document.removeEventListener('estudosplus:takeover', onTakeover);
     cleanups.forEach((fn) => { try { fn(); } catch { /* ignore */ } });
   });
   const alive = () => { try { return !!chrome.runtime.id; } catch { return false; } };
@@ -60,7 +61,7 @@
     const walk = (root) => {
       const tw = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
       for (let el = tw.nextNode(); el; el = tw.nextNode()) {
-        if (el.id === 'cinefrases-root') continue;
+        if (el.id === 'estudosplus-root' || el.id === 'cinefrases-root') continue;
         const sr = shadowOf(el);
         if (sr) { out.push(sr); walk(sr); }
       }
@@ -123,7 +124,7 @@
     if (!video) return '';
     const vr = video.getBoundingClientRect();
     let els = qsa(GENERIC).filter((el) => {
-      if (el.id === 'cinefrases-root' || /^(BUTTON|INPUT|SELECT|OPTION|LABEL|A|VIDEO|TRACK|svg)$/i.test(el.tagName)) return false;
+      if (el.id === 'estudosplus-root' || /^(BUTTON|INPUT|SELECT|OPTION|LABEL|A|VIDEO|TRACK|svg)$/i.test(el.tagName)) return false;
       const cls = `${typeof el.className === 'string' ? el.className : ''} ${el.id} ${el.getAttribute('data-testid') || ''}`;
       if (NOT_SUBTITLE.test(cls)) return false;
       if (el.closest('button,[role="button"],[role="menu"],[role="menuitem"],[role="dialog"],[role="listbox"]')) return false;
@@ -239,61 +240,68 @@
     let res = null;
     try { res = await chrome.runtime.sendMessage({ type: 'phrase', phrase }); } catch { /* extensão recarregada */ }
 
-    if (!res) ui.toast(copied ? 'Copiada' : 'Não foi possível copiar', 'warn', 'Recarregue a página para sincronizar.');
-    else if (res.synced) ui.toast(copied ? 'Copiada e enviada ao app' : 'Enviada ao app', 'ok', entry.text);
-    else ui.toast(copied ? 'Copiada — envio pendente' : 'Envio pendente', 'warn', 'Sem conexão agora. Será enviada automaticamente.');
+    if (!res) ui.toast(copied ? 'Frase copiada' : 'Não foi possível copiar', 'warn', 'Recarregue a página para enviar ao Estudos Plus.');
+    else if (res.synced) ui.toast(copied ? 'Salva no Estudos Plus e copiada' : 'Salva no Estudos Plus', 'ok', entry.text);
+    else ui.toast(copied ? 'Frase copiada — envio pendente' : 'Envio pendente', 'warn', 'Sem conexão agora. Será enviada automaticamente.');
   }
 
   // ---------- Interface (Shadow DOM fechado para não conflitar com o site) ----------
   const ui = (() => {
     const host = document.createElement('div');
-    host.id = 'cinefrases-root';
+    host.id = 'estudosplus-root';
     host.style.cssText = 'all:initial;position:fixed;inset:0;pointer-events:none;z-index:2147483647;';
     const root = host.attachShadow({ mode: 'closed' });
+    const ICON = {
+      quote: '<svg viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>',
+      history: '<svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>',
+      check: '<svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>',
+      alert: '<svg viewBox="0 0 24 24"><path d="M11 15h2v2h-2zm0-8h2v6h-2z"/></svg>',
+    };
     root.innerHTML = `
       <style>
         :host { all: initial; }
         * { box-sizing: border-box; margin: 0; font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
-        .wrap { position: fixed; right: 24px; bottom: 96px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
-        .bar { display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 14px; background: rgba(12,12,16,.72);
-          border: 1px solid rgba(255,255,255,.12); box-shadow: 0 10px 30px rgba(0,0,0,.35); backdrop-filter: blur(14px) saturate(140%);
-          opacity: 0; transform: translateY(6px) scale(.98); transition: opacity .18s ease, transform .18s ease; pointer-events: none; }
+        svg { width: 16px; height: 16px; fill: currentColor; flex: 0 0 auto; }
+        .wrap { position: fixed; right: 24px; bottom: 96px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
+        .surface { background: rgba(17,19,26,.86); border: 1px solid rgba(255,255,255,.10); box-shadow: 0 12px 32px rgba(0,0,0,.40); backdrop-filter: blur(16px) saturate(150%); color: #f3f4f7; }
+        .bar { display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 12px;
+          opacity: 0; transform: translateY(6px); transition: opacity .18s ease, transform .18s ease; pointer-events: none; }
         .bar.show, .bar:hover { opacity: 1; transform: none; pointer-events: auto; }
-        button { all: unset; cursor: pointer; color: #fff; border-radius: 10px; height: 34px; padding: 0 12px; font-size: 13px; font-weight: 600;
+        button { all: unset; cursor: pointer; color: inherit; border-radius: 8px; height: 32px; padding: 0 10px; font-size: 13px; font-weight: 600;
           display: inline-flex; gap: 8px; align-items: center; transition: background .15s; }
-        button:hover { background: rgba(255,255,255,.12); }
-        button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-        .copy .q { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: #e50914; font-size: 15px; line-height: 1; padding-top: 4px; }
-        kbd { font: 600 11px/1 ui-monospace, monospace; color: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.2); border-radius: 5px; padding: 3px 5px; }
-        .sep { width: 1px; height: 18px; background: rgba(255,255,255,.14); }
-        .hist { padding: 0 10px; color: rgba(255,255,255,.8); }
-        .panel { pointer-events: auto; width: min(420px, 80vw); max-height: 46vh; overflow: auto; background: rgba(12,12,16,.9); color: #fff;
-          border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 6px; display: none; backdrop-filter: blur(14px);
-          box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+        button:hover { background: rgba(255,255,255,.10); }
+        button:focus-visible { outline: 2px solid #818cf8; outline-offset: 1px; }
+        .copy .ic { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: #4f46e5; color: #fff; }
+        .copy .ic svg { width: 14px; height: 14px; }
+        kbd { font: 600 10.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.18); border-radius: 5px; padding: 3px 5px; }
+        .sep { width: 1px; height: 18px; background: rgba(255,255,255,.12); margin: 0 2px; }
+        .hist { color: rgba(255,255,255,.75); padding: 0 8px; }
+        .panel { pointer-events: auto; width: min(420px, 80vw); max-height: 46vh; overflow: auto; border-radius: 14px; padding: 6px; display: none; }
         .panel.open { display: block; }
         .panel header { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px 6px; font-size: 11px;
-          text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.55); font-weight: 600; }
-        .item { display: flex; gap: 12px; align-items: baseline; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 14px; line-height: 1.4; }
-        .item:hover { background: rgba(255,255,255,.08); }
+          text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.5); font-weight: 600; }
+        .item { display: flex; gap: 12px; align-items: baseline; padding: 9px 10px; border-radius: 9px; cursor: pointer; font-size: 14px; line-height: 1.45; }
+        .item:hover { background: rgba(255,255,255,.07); }
         .item .t { flex: 1; }
-        .item .time { color: rgba(255,255,255,.45); font-size: 12px; font-variant-numeric: tabular-nums; }
+        .item .time { color: rgba(255,255,255,.4); font-size: 12px; font-variant-numeric: tabular-nums; }
         .empty { padding: 14px 10px; color: rgba(255,255,255,.6); font-size: 13px; }
-        .toast { display: flex; gap: 12px; align-items: flex-start; pointer-events: none; max-width: min(420px, 80vw); background: rgba(12,12,16,.92); color: #fff;
-          border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 12px 14px; box-shadow: 0 16px 40px rgba(0,0,0,.45);
-          backdrop-filter: blur(14px); opacity: 0; transform: translateY(8px); transition: .22s ease; }
+        .toast { display: flex; gap: 12px; align-items: flex-start; pointer-events: none; max-width: min(400px, 80vw); border-radius: 12px; padding: 11px 14px 11px 12px;
+          opacity: 0; transform: translateY(8px); transition: .22s ease; }
         .toast.show { opacity: 1; transform: none; }
-        .toast .ic { flex: 0 0 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: #22c55e; color: #04130a; }
-        .toast.warn .ic { background: #f59e0b; color: #1f1300; }
-        .toast b { display: block; font-size: 14px; font-weight: 600; }
-        .toast span.d { display: block; margin-top: 3px; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.4; }
+        .toast .ic { flex: 0 0 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #22c55e; color: #052e13; }
+        .toast .ic svg { width: 14px; height: 14px; }
+        .toast.warn .ic { background: #f59e0b; color: #2b1700; }
+        .toast b { display: block; font-size: 13.5px; font-weight: 600; line-height: 22px; }
+        .toast span.d { display: block; margin-top: 1px; color: rgba(255,255,255,.68); font-size: 13px; line-height: 1.4; }
+        .brand { color: rgba(255,255,255,.45); font-weight: 600; }
       </style>
       <div class="wrap">
-        <div class="toast" role="status"><div class="ic">✓</div><div><b></b><span class="d"></span></div></div>
-        <div class="panel"><header><span>Últimas falas</span><span>clique para copiar</span></header><div class="list"></div></div>
-        <div class="bar">
-          <button class="copy" title="Copiar a frase da tela"><span class="q">❝</span>Copiar frase <kbd>Alt C</kbd></button>
+        <div class="toast surface" role="status"><div class="ic"></div><div><b></b><span class="d"></span></div></div>
+        <div class="panel surface"><header><span>Últimas falas</span><span>clique para salvar</span></header><div class="list"></div></div>
+        <div class="bar surface">
+          <button class="copy" title="Salvar a frase da tela (Alt+C)"><span class="ic">${ICON.quote}</span>Salvar frase <kbd>Alt C</kbd></button>
           <span class="sep"></span>
-          <button class="hist" title="Últimas falas (Alt+X)">Histórico</button>
+          <button class="hist" title="Últimas falas (Alt+X)">${ICON.history}</button>
         </div>
       </div>`;
 
@@ -364,8 +372,8 @@
 
     function toast(title, kind = 'ok', detail = '') {
       attach();
-      toastEl.className = `toast ${kind}`;
-      $('.toast .ic').textContent = kind === 'ok' ? '✓' : '!';
+      toastEl.className = `toast surface ${kind}`;
+      $('.toast .ic').innerHTML = kind === 'ok' ? ICON.check : ICON.alert;
       $('.toast b').textContent = title;
       const d = detail.length > 160 ? detail.slice(0, 160) + '…' : detail;
       $('.toast .d').textContent = kind === 'ok' && detail ? `“${d}”` : d;

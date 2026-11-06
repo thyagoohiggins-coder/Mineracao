@@ -1,4 +1,4 @@
-// CineFrases — servidor de sincronização (sem dependências externas).
+// Estudos Plus — servidor de sincronização (sem dependências externas).
 // - API REST para salvar/listar/editar/apagar frases
 // - Server-Sent Events (SSE) para atualizar o app e a extensão em tempo real
 'use strict';
@@ -113,7 +113,7 @@ async function handle(req, res) {
 
   const m = pathname.match(/^\/api\/rooms\/([^/]+)\/(phrases|stream)(?:\/([^/]+))?$/);
   if (!m) {
-    if (pathname === '/') return send(res, 200, { name: 'cinefrases', ok: true, message: 'Servidor do CineFrases no ar. Use este endereço na extensão e no app Android.' });
+    if (pathname === '/') return send(res, 200, { name: 'cinefrases', ok: true, message: 'Servidor do Estudos Plus no ar. Use este endereço na extensão e no app Android.' });
     return send(res, 404, { error: 'Rota inexistente' });
   }
 
@@ -182,7 +182,7 @@ const server = http.createServer((req, res) => {
 });
 
 if (require.main === module) {
-  server.listen(PORT, HOST, () => console.log(`CineFrases rodando em http://localhost:${PORT}`));
+  server.listen(PORT, HOST, () => console.log(`Estudos Plus rodando em http://localhost:${PORT}`));
   const shutdown = () => { try { saveNow(); } finally { process.exit(0); } };
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);

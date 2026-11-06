@@ -46,14 +46,14 @@ async function checkTab() {
   const box = $('tab');
   const set = (kind, icon, title, detail) => {
     box.className = `tab ${kind}`;
-    $('tabIcon').textContent = icon;
+    $('tabIcon').setAttribute('href', `#i-${icon}`);
     $('tabTitle').textContent = title;
     $('tabDetail').textContent = '';
     if (detail instanceof Node) $('tabDetail').appendChild(detail); else $('tabDetail').textContent = detail || '';
   };
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !/^https?:/.test(tab.url || '')) {
-    set('', '•', 'Abra um vídeo para começar', 'Netflix, Disney+, Max, Prime Video, YouTube…');
+    set('', 'play', 'Abra um vídeo para começar', 'Netflix, Disney+, Max, Prime Video, YouTube e outros.');
     $('copyNow').hidden = true;
     return;
   }
@@ -67,15 +67,15 @@ async function checkTab() {
     } catch { /* página protegida */ }
   }
   if (!st) {
-    set('', '•', 'Nenhum vídeo nesta aba', 'Dê play no vídeo e abra este menu de novo.');
+    set('', 'play', 'Nenhum vídeo nesta aba', 'Dê play no vídeo e abra este menu de novo.');
     $('copyNow').hidden = true;
   } else if (st.subtitle) {
     const q = document.createElement('q');
     q.textContent = st.subtitle.length > 120 ? st.subtitle.slice(0, 120) + '…' : st.subtitle;
-    set('ok', '✓', `Legenda detectada · ${st.site}`, q);
+    set('ok', 'check', `Legenda detectada · ${st.site}`, q);
     $('copyNow').hidden = false;
   } else {
-    set('warn', '!', `Vídeo encontrado · ${st.site}`, st.captured
+    set('warn', 'alert', `Vídeo encontrado · ${st.site}`, st.captured
       ? 'Nenhuma legenda na tela agora (aparece quando alguém fala).'
       : 'Ative as legendas (CC) no player para poder copiar as frases.');
     $('copyNow').hidden = !st.captured;
@@ -89,7 +89,7 @@ function render(phrases) {
   if (!phrases.length) {
     const li = document.createElement('li');
     li.className = 'empty';
-    li.textContent = 'Nenhuma frase ainda. Abra um vídeo com legenda e aperte Alt+C.';
+    li.textContent = 'Nenhuma frase ainda. Abra um vídeo com legenda e pressione Alt+C.';
     list.appendChild(li);
     return;
   }
@@ -103,7 +103,7 @@ function render(phrases) {
     li.append(t, m);
     li.addEventListener('click', async () => {
       await navigator.clipboard.writeText(p.text);
-      m.textContent = 'Copiada ✓';
+      m.textContent = 'Copiada';
       setTimeout(() => { m.textContent = meta(); }, 1200);
     });
     list.appendChild(li);
@@ -146,8 +146,9 @@ async function init() {
 
   $('copyCode').onclick = async () => {
     await navigator.clipboard.writeText(code);
-    $('copyCode').textContent = 'Copiado ✓';
-    setTimeout(() => ($('copyCode').textContent = 'Copiar'), 1200);
+    const label = $('copyCode').querySelector('span');
+    label.textContent = 'Copiado';
+    setTimeout(() => (label.textContent = 'Copiar'), 1200);
   };
   $('editCode').onclick = (e) => { e.preventDefault(); editMode(true); };
   $('cancelEdit').onclick = () => editMode(false);

@@ -1,4 +1,4 @@
-# Colocar o CineFrases na Cloudflare (passo a passo)
+# Colocar o Estudos Plus na Cloudflare (passo a passo)
 
 Tempo: uns 10 minutos. Custo: **grátis**.
 Depois disso, a extensão e o app conversam pela internet, de qualquer lugar, sem precisar deixar o computador ligado.
@@ -34,12 +34,12 @@ No final aparece o endereço do seu servidor, assim:
 https://cinefrases.joao.workers.dev
 ```
 
-**Copie esse endereço.** Para conferir, abra ele no navegador: deve aparecer `"Servidor do CineFrases no ar"`.
+**Copie esse endereço.** Para conferir, abra ele no navegador: deve aparecer `"Servidor do Estudos Plus no ar"`.
 
 ### 4. Pronto: extensão e app já usam esse endereço
 O endereço `https://cinefrases.thyagohikins.workers.dev` já vem fixo na extensão e no app; ninguém precisa digitá-lo.
 
-1. Clique no ícone do **CineFrases** no navegador e veja o seu **código** (ex.: `lua-7K2Q9P`), criado automaticamente.
+1. Clique no ícone do **Estudos Plus** no navegador e veja o seu **código** (ex.: `lua-7K2Q9P`), criado automaticamente.
 2. No app do celular, digite esse código e toque em **Conectar**.
 3. Abra um vídeo com legenda e aperte **Alt + C**. A frase aparece no celular na hora. 🎉
 

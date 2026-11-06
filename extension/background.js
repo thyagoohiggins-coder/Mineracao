@@ -1,4 +1,4 @@
-// CineFrases — service worker
+// Estudos Plus — service worker
 // Recebe as frases do content script, envia ao servidor e mantém uma fila offline.
 'use strict';
 importScripts('config.js');

@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "CineFrases — copie frases de filmes e séries",
-  "short_name": "CineFrases",
-  "version": "1.1.0",
-  "description": "Copie a legenda que está na tela com um clique ou Alt+C (Netflix, Disney+, Max, Prime Video, YouTube e qualquer vídeo com legenda) e receba no app.",
+  "name": "Estudos Plus",
+  "short_name": "Estudos Plus",
+  "version": "1.2.0",
+  "description": "Salve a legenda que está na tela com um clique ou Alt+C (Netflix, Disney+, Max, Prime Video, YouTube e mais) e revise no app Estudos Plus.",
   "permissions": [
     "storage",
     "clipboardWrite",
@@ -21,12 +21,15 @@
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
-    }
+    },
+    "default_title": "Estudos Plus"
   },
   "icons": {
     "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
@@ -36,7 +39,7 @@
         "default": "Alt+Shift+C",
         "mac": "Alt+Shift+C"
       },
-      "description": "Copiar a frase que está na tela"
+      "description": "Salvar a frase que está na tela"
     }
   },
   "content_scripts": [

@@ -1,4 +1,4 @@
-# CineFrases — servidor de sincronização na Cloudflare
+# Estudos Plus — servidor de sincronização na Cloudflare (o nome "cinefrases" fica: faz parte do endereço)
 name = "cinefrases"
 main = "src/index.js"
 compatibility_date = "2026-10-01"

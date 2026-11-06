@@ -1,4 +1,4 @@
-# CineFrases 🎬❝
+# Estudos Plus
 
 Copie **instantaneamente** a frase (legenda) que está na tela enquanto assiste a um filme, série ou vídeo — e receba ela **na hora** no app Android.
 
@@ -57,7 +57,7 @@ Testes locais (sobe o Worker com `wrangler dev`): `npm test`.
 1. Abra `chrome://extensions` (ou `edge://extensions`).
 2. Ative o **Modo do desenvolvedor**.
 3. Clique em **Carregar sem compactação** e selecione a pasta `extension/`.
-4. Clique no ícone do CineFrases: o seu **código** (ex.: `lua-7K2Q9P`) já aparece, criado automaticamente. É só digitar esse código no app.
+4. Clique no ícone do Estudos Plus: o seu **código** (ex.: `lua-7K2Q9P`) já aparece, criado automaticamente. É só digitar esse código no app.
    O menu também mostra se a legenda da aba atual está sendo detectada.
 
 ### Como usar
@@ -78,16 +78,16 @@ Cada frase vai com o nome do filme/série, o serviço, o minuto do vídeo e o li
 
 ## 3. App Android (Java)
 
-**Baixar pronto:** cada push gera o APK no GitHub Actions → aba *Actions* → último *Build* → artefato **CineFrases-apk**. Instale o `app-debug.apk` no celular (permita "instalar apps desconhecidos").
+**Baixar pronto:** cada push gera o APK no GitHub Actions → aba *Actions* → último *Build* → artefato **EstudosPlus-apk**. Instale o `EstudosPlus-<versão>.apk` no celular. Para instalar e atualizar sem erro, e sobre o aviso do Play Protect, veja **[docs/INSTALAR-E-ATUALIZAR.md](docs/INSTALAR-E-ATUALIZAR.md)**.
 
 **Compilar:** abra a pasta `android/` no Android Studio e clique em ▶ Run, ou:
 
 ```bash
 cd android
-./gradlew assembleDebug
+./gradlew assembleRelease -PkeystoreFile=/caminho/estudosplus.jks -PkeystorePassword=SENHA
 ```
 
-O APK fica em `android/app/build/outputs/apk/debug/app-debug.apk`. (minSdk 26 / Android 8.0+.)
+O APK fica em `android/app/build/outputs/apk/release/`. (Android 8.0 ou mais novo.)
 Para apontar o app para outro servidor: `./gradlew assembleDebug -PserverUrl=https://outro-endereco`.
 
 ### Conectando o app
