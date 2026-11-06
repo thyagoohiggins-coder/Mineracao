@@ -1,5 +1,6 @@
-package com.cinefrases.app;
+package com.estudosplus.app;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.text.format.DateUtils;
@@ -9,6 +10,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
@@ -70,27 +73,31 @@ public class PhraseAdapter extends RecyclerView.Adapter<PhraseAdapter.Holder> {
     @Override
     public void onBindViewHolder(@NonNull Holder h, int position) {
         Phrase p = items.get(position);
-        h.quote.setText("“" + p.text + "”");
+        h.quote.setText(p.text);
 
+        // Etiqueta do serviço: texto na cor do serviço sobre fundo suave
+        int color = sourceColor(p.source);
         h.badge.setText(p.displaySource());
+        h.badge.setTextColor(color);
         GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(h.badge.getResources().getDisplayMetrics().density * 6);
-        bg.setColor(sourceColor(p.source));
+        bg.setColor(ColorUtils.setAlphaComponent(color, 0x26));
         h.badge.setBackground(bg);
 
         h.title.setText(p.title);
         h.title.setVisibility(p.title == null || p.title.isEmpty() ? View.GONE : View.VISIBLE);
 
-        String time = p.formattedTime();
-        h.time.setText(time.isEmpty() ? "" : "⏱ " + time);
-        h.time.setVisibility(time.isEmpty() ? View.GONE : View.VISIBLE);
-
+        // Rodapé: minuto do vídeo · quando foi salva
         long now = System.currentTimeMillis();
-        // relógios do PC e do celular podem diferir alguns segundos: nunca mostrar "daqui a X minutos"
-        h.date.setText(DateUtils.getRelativeTimeSpanString(Math.min(p.createdAt, now), now, DateUtils.MINUTE_IN_MILLIS));
+        CharSequence when = DateUtils.getRelativeTimeSpanString(Math.min(p.createdAt, now), now, DateUtils.MINUTE_IN_MILLIS);
+        String time = p.formattedTime();
+        h.meta.setText(time.isEmpty() ? when : time + "  ·  " + when);
 
-        h.favorite.setText(p.favorite ? "★" : "☆");
-        h.favorite.setTextColor(p.favorite ? Color.parseColor("#FBBF24") : h.date.getCurrentTextColor());
+        int muted = ContextCompat.getColor(h.itemView.getContext(), R.color.on_surface_variant);
+        int star = ContextCompat.getColor(h.itemView.getContext(), R.color.star);
+        h.favorite.setIconResource(p.favorite ? R.drawable.ic_star : R.drawable.ic_star_border);
+        h.favorite.setIconTint(ColorStateList.valueOf(p.favorite ? star : muted));
+        h.favorite.setContentDescription(h.itemView.getContext().getString(p.favorite ? R.string.unfavorite : R.string.favorite));
         h.open.setVisibility(p.url == null || p.url.isEmpty() ? View.GONE : View.VISIBLE);
 
         h.card.setOnClickListener(v -> callbacks.onCopy(p));
@@ -101,32 +108,31 @@ public class PhraseAdapter extends RecyclerView.Adapter<PhraseAdapter.Holder> {
         h.delete.setOnClickListener(v -> callbacks.onDelete(p));
 
         if (highlight.remove(p.id)) {
-            h.card.setScaleX(0.96f);
-            h.card.setScaleY(0.96f);
-            h.card.setAlpha(0.4f);
-            h.card.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(450).start();
+            h.card.setAlpha(0f);
+            h.card.setTranslationY(-24f);
+            h.card.animate().alpha(1f).translationY(0f).setDuration(350).start();
         }
     }
 
     static int sourceColor(String source) {
-        if (source == null) return Color.parseColor("#555555");
+        if (source == null) return Color.parseColor("#64748B");
         switch (source) {
             case "netflix": return Color.parseColor("#E50914");
             case "youtube": return Color.parseColor("#FF0033");
-            case "disney": return Color.parseColor("#113CCF");
-            case "max": return Color.parseColor("#5A2EE6");
-            case "prime": return Color.parseColor("#00A8E1");
-            case "globoplay": return Color.parseColor("#F06414");
-            case "paramount": return Color.parseColor("#0064FF");
+            case "disney": return Color.parseColor("#2563EB");
+            case "max": return Color.parseColor("#7C3AED");
+            case "prime": return Color.parseColor("#0EA5E9");
+            case "globoplay": return Color.parseColor("#F97316");
+            case "paramount": return Color.parseColor("#2563EB");
             case "crunchyroll": return Color.parseColor("#F47521");
-            case "appletv": return Color.parseColor("#333333");
-            default: return Color.parseColor("#555555");
+            case "appletv": return Color.parseColor("#64748B");
+            default: return Color.parseColor("#64748B");
         }
     }
 
     static class Holder extends RecyclerView.ViewHolder {
         final MaterialCardView card;
-        final TextView quote, badge, title, time, date;
+        final TextView quote, badge, title, meta;
         final MaterialButton copy, favorite, open, share, delete;
 
         Holder(View v) {
@@ -135,8 +141,7 @@ public class PhraseAdapter extends RecyclerView.Adapter<PhraseAdapter.Holder> {
             quote = v.findViewById(R.id.quote);
             badge = v.findViewById(R.id.badge);
             title = v.findViewById(R.id.title);
-            time = v.findViewById(R.id.time);
-            date = v.findViewById(R.id.date);
+            meta = v.findViewById(R.id.meta);
             copy = v.findViewById(R.id.copyButton);
             favorite = v.findViewById(R.id.favoriteButton);
             open = v.findViewById(R.id.openButton);

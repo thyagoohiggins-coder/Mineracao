@@ -1,4 +1,4 @@
-package com.cinefrases.app;
+package com.estudosplus.app;
 
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
@@ -12,7 +12,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -20,11 +19,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.snackbar.Snackbar;
@@ -56,10 +56,10 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
     private String filter = FILTER_ALL;
     private String chipsKey = null;
 
-    private MaterialToolbar toolbar;
     private View statusDot;
     private TextView statusText, countText;
     private View emptyView;
+    private TextView emptyTitle, emptyBody;
     private RecyclerView recycler;
     private SwipeRefreshLayout swipe;
     private ChipGroup chips;
@@ -75,14 +75,21 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
         setContentView(R.layout.activity_main);
         api = new ApiClient(Prefs.serverUrl(), Prefs.syncCode(this));
 
-        toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        toolbar.setSubtitle(getString(R.string.code_label, Prefs.syncCode(this)));
+        ((TextView) findViewById(R.id.codeText)).setText(getString(R.string.code_label, Prefs.syncCode(this)));
+        View menuButton = findViewById(R.id.menuButton);
+        menuButton.setOnClickListener(v -> {
+            PopupMenu menu = new PopupMenu(this, v);
+            menu.getMenuInflater().inflate(R.menu.main_menu, menu.getMenu());
+            menu.setOnMenuItemClickListener(this::onMenuItem);
+            menu.show();
+        });
 
         statusDot = findViewById(R.id.statusDot);
         statusText = findViewById(R.id.statusText);
         countText = findViewById(R.id.countText);
         emptyView = findViewById(R.id.emptyView);
+        emptyTitle = findViewById(R.id.emptyTitle);
+        emptyBody = findViewById(R.id.emptyBody);
         chips = findViewById(R.id.filterChips);
         swipe = findViewById(R.id.swipe);
         recycler = findViewById(R.id.recycler);
@@ -250,7 +257,9 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
         List<Phrase> list = visible();
         adapter.submit(list);
         boolean none = all.isEmpty();
-        emptyView.setVisibility(none ? View.VISIBLE : View.GONE);
+        emptyView.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
+        emptyTitle.setVisibility(none ? View.VISIBLE : View.GONE);
+        emptyBody.setText(none ? R.string.empty_body : R.string.no_results);
         countText.setVisibility(none ? View.GONE : View.VISIBLE);
         countText.setText(getResources().getQuantityString(R.plurals.phrase_count, list.size(), list.size()));
     }
@@ -275,11 +284,9 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
     }
 
     private void addChip(String tag, String label) {
-        Chip c = new Chip(this);
+        Chip c = (Chip) getLayoutInflater().inflate(R.layout.item_chip, chips, false);
         c.setText(label);
         c.setTag(tag);
-        c.setCheckable(true);
-        c.setCheckedIconVisible(false);
         c.setOnClickListener(v -> {
             filter = tag;
             render();
@@ -292,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
     @Override
     public void onCopy(Phrase p) {
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        cm.setPrimaryClip(ClipData.newPlainText("CineFrases", p.text));
+        cm.setPrimaryClip(ClipData.newPlainText("Estudos Plus", p.text));
         // A partir do Android 13 o próprio sistema mostra um aviso de cópia
         if (Build.VERSION.SDK_INT < 33) Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show();
     }
@@ -383,14 +390,7 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
 
     // ---------- Menu ----------
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    private boolean onMenuItem(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             swipe.setRefreshing(true);
@@ -415,6 +415,14 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
             startActivity(new Intent(this, SetupActivity.class));
             return true;
         }
-        return super.onOptionsItemSelected(item);
+        if (id == R.id.action_about) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.app_name)
+                    .setMessage(getString(R.string.about_msg, BuildConfig.VERSION_NAME))
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+            return true;
+        }
+        return false;
     }
 }

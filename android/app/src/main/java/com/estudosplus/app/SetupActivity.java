@@ -1,15 +1,13 @@
-package com.cinefrases.app;
+package com.estudosplus.app;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -17,8 +15,8 @@ import com.google.android.material.textfield.TextInputEditText;
 /** Tela de conexão: endereço do servidor + código de sincronização (o mesmo da extensão). */
 public class SetupActivity extends AppCompatActivity {
     private TextInputEditText codeInput;
-    private Button connectButton;
-    private ProgressBar progress;
+    private View connectButton;
+    private View progress;
     private TextView errorText;
     private final Handler main = new Handler(Looper.getMainLooper());
 
@@ -35,6 +33,15 @@ public class SetupActivity extends AppCompatActivity {
         codeInput.setText(Prefs.syncCode(this));
 
         connectButton.setOnClickListener(v -> connect());
+        codeInput.setOnEditorActionListener((v, actionId, event) -> { connect(); return true; });
+
+        int[] steps = {R.id.step1, R.id.step2, R.id.step3};
+        int[] texts = {R.string.setup_step1, R.string.setup_step2, R.string.setup_step3};
+        for (int i = 0; i < steps.length; i++) {
+            View step = findViewById(steps[i]);
+            ((TextView) step.findViewById(R.id.stepNumber)).setText(String.valueOf(i + 1));
+            ((TextView) step.findViewById(R.id.stepText)).setText(texts[i]);
+        }
     }
 
     private void connect() {
@@ -54,7 +61,7 @@ public class SetupActivity extends AppCompatActivity {
                 if (ok) {
                     finishSetup(code);
                 } else {
-                    new AlertDialog.Builder(this)
+                    new MaterialAlertDialogBuilder(this)
                             .setTitle(R.string.server_unreachable_title)
                             .setMessage(R.string.server_unreachable_msg)
                             .setPositiveButton(R.string.save_anyway, (d, w) -> finishSetup(code))

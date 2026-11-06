@@ -1,4 +1,4 @@
-package com.cinefrases.app;
+package com.estudosplus.app;
 
 import org.json.JSONException;
 import org.json.JSONObject;

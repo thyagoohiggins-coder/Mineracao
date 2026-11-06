@@ -19,14 +19,32 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Compilar APK de debug
+      - name: Chave de assinatura (Secrets)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/estudosplus.jks"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/estudosplus.jks" >> "$GITHUB_ENV"
+            echo "Chave de assinatura carregada."
+          else
+            echo "::warning title=APK sem chave fixa::Configure os secrets ANDROID_KEYSTORE_BASE64 e ANDROID_KEYSTORE_PASSWORD. Sem eles o APK não consegue atualizar uma versão já instalada."
+          fi
+      - name: Compilar APK (release)
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleDebug
+          ./gradlew --no-daemon assembleRelease
+          ls -la app/build/outputs/apk/release/
+      - name: Conferir assinatura
+        run: |
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs app/build/outputs/apk/release/*.apk | grep -E "Signer #1 certificate (DN|SHA-256)"
       - uses: actions/upload-artifact@v4
         with:
-          name: CineFrases-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: EstudosPlus-apk
+          path: android/app/build/outputs/apk/release/*.apk
 
   server:
     name: Servidor (testes)

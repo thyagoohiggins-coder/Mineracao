@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="accent">#E50914</color>
-    <color name="online">#22C55E</color>
-    <color name="offline">#9A9AAB</color>
-    <color name="ic_launcher_background">#0F0F14</color>
-    <color name="bg">#F6F6F8</color>
+    <!-- Marca Estudos Plus -->
+    <color name="brand">#4F46E5</color>
+    <color name="brand_dark">#3730A3</color>
+    <color name="ic_launcher_background">#4F46E5</color>
+
+    <!-- Tema claro -->
+    <color name="primary">#4F46E5</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="primary_container">#E0E7FF</color>
+    <color name="on_primary_container">#1E1B4B</color>
+    <color name="secondary_container">#E0E7FF</color>
+    <color name="on_secondary_container">#312E81</color>
+    <color name="background">#F6F7FB</color>
+    <color name="surface">#F6F7FB</color>
     <color name="card">#FFFFFF</color>
-    <color name="fg">#15151B</color>
-    <color name="muted">#6B6B7B</color>
+    <color name="on_surface">#101828</color>
+    <color name="surface_variant">#ECEEF4</color>
+    <color name="on_surface_variant">#5D6576</color>
+    <color name="outline">#C8CDD8</color>
+    <color name="outline_variant">#E4E7EE</color>
+    <color name="star">#F59E0B</color>
+    <color name="success">#16A34A</color>
+    <color name="offline">#9AA1B2</color>
+    <color name="error">#DC2626</color>
 </resources>

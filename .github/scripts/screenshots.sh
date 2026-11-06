@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Roda dentro do emulador (android-emulator-runner): instala o app e tira os prints.
 set -euxo pipefail
-PKG=com.cinefrases.app
+PKG=com.estudosplus.app
 OUT=docs/prints
 mkdir -p "$OUT"
 shot() { sleep "${2:-3}"; adb exec-out screencap -p > "$OUT/$1.png"; }
@@ -31,7 +31,7 @@ adb shell am broadcast -a com.android.systemui.demo -e command battery -e level 
 adb shell am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4
 adb shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
 
-adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/*.apk
 
 # 1) Primeira abertura: tela de conexão
 adb shell am start -W -n $PKG/.MainActivity
@@ -39,14 +39,14 @@ shot 01-conectar 4
 
 # 2) Configura o código (o APK dos prints aponta para o servidor local, 10.0.2.2)
 adb shell am force-stop $PKG
-cat > /tmp/cinefrases.xml <<XML
+cat > /tmp/estudosplus.xml <<XML
 <?xml version='1.0' encoding='utf-8' standalone='yes' ?>
 <map>
     <string name="syncCode">lua-7K2Q9P</string>
 </map>
 XML
 adb shell "run-as $PKG mkdir -p shared_prefs"
-adb shell "run-as $PKG sh -c 'cat > shared_prefs/cinefrases.xml'" < /tmp/cinefrases.xml
+adb shell "run-as $PKG sh -c 'cat > shared_prefs/estudosplus.xml'" < /tmp/estudosplus.xml
 adb shell am start -W -n $PKG/.MainActivity
 shot 02-lista 6
 
@@ -67,7 +67,7 @@ shot 05-busca 2
 adb shell am force-stop $PKG
 adb shell am start -W -n $PKG/.MainActivity
 sleep 4
-tap text "★ Favoritas" || echo "filtro: chip não encontrado"
+tap text "Favoritas" || echo "filtro: chip não encontrado"
 shot 06-favoritas 2
 
 # 6) Tema escuro

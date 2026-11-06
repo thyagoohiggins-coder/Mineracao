@@ -1,4 +1,4 @@
-package com.cinefrases.app;
+package com.estudosplus.app;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Chamadas REST ao servidor do CineFrases. Bloqueante: use fora da thread de UI. */
+/** Chamadas REST ao servidor do Estudos Plus. Bloqueante: use fora da thread de UI. */
 public class ApiClient {
     private final String baseUrl;
     private final String code;

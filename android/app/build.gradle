@@ -2,37 +2,75 @@ plugins {
     id 'com.android.application'
 }
 
+// ---------- Assinatura ----------
+// A MESMA chave precisa assinar todas as versões, senão o Android recusa a atualização por cima.
+// No GitHub Actions a chave vem dos Secrets (ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD).
+// Localmente: ./gradlew assembleRelease -PkeystoreFile=/caminho/estudosplus.jks -PkeystorePassword=...
+def keystorePath = System.getenv('ANDROID_KEYSTORE_FILE') ?: project.findProperty('keystoreFile')
+def keystorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: project.findProperty('keystorePassword')
+def keyAliasName = System.getenv('ANDROID_KEY_ALIAS') ?: (project.findProperty('keyAlias') ?: 'estudosplus')
+def hasReleaseKey = keystorePath && keystorePassword && file(keystorePath).exists()
+
+// Cada build do GitHub Actions ganha um número de versão maior (exigência para atualizar por cima)
+def buildNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '0') as int
+
 android {
-    namespace 'com.cinefrases.app'
-    compileSdk 35
+    namespace 'com.estudosplus.app'
+    compileSdk 36
 
     defaultConfig {
-        applicationId 'com.cinefrases.app'
+        applicationId 'com.estudosplus.app'
         minSdk 26
-        targetSdk 35
-        versionCode 2
-        versionName '1.1.0'
+        targetSdk 36
+        versionCode 100 + buildNumber
+        versionName "1.2.${buildNumber}"
 
         // Servidor de sincronização (Cloudflare Worker). Fixo e invisível para o usuário.
         def serverUrl = project.findProperty('serverUrl') ?: 'https://cinefrases.thyagohikins.workers.dev'
         buildConfigField 'String', 'SERVER_URL', "\"${serverUrl}\""
     }
 
-    buildFeatures {
-        buildConfig true
+    signingConfigs {
+        release {
+            if (hasReleaseKey) {
+                storeFile file(keystorePath)
+                storePassword keystorePassword
+                keyAlias keyAliasName
+                keyPassword keystorePassword
+            }
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig hasReleaseKey ? signingConfigs.release : signingConfigs.debug
         }
+        debug {
+            if (hasReleaseKey) signingConfig signingConfigs.release
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach {
+            outputFileName = "EstudosPlus-${variant.versionName}${variant.buildType.name == 'release' ? '' : '-' + variant.buildType.name}.apk"
+        }
+    }
+}
+
+if (!hasReleaseKey) {
+    logger.warn('AVISO: chave de assinatura não configurada — o APK usará uma chave temporária e NÃO poderá atualizar uma versão já instalada.')
 }
 
 dependencies {

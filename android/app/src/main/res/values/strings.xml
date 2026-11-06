@@ -1,42 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">CineFrases</string>
-    <string name="setup_subtitle">Receba aqui, em tempo real, as frases que você copia com a extensão enquanto assiste Netflix, Disney+, Max, Prime Video, YouTube…</string>
-    <string name="code_hint">Código da extensão (ex.: lua-7K2Q9P)</string>
-    <string name="code_help">Clique no ícone do CineFrases no navegador para ver o seu código</string>
+    <string name="app_name">Estudos Plus</string>
+
+    <!-- Conexão -->
+    <string name="setup_subtitle">As frases que você salva enquanto assiste filmes, séries e vídeos, organizadas para estudar.</string>
+    <string name="setup_steps_title">Como conectar</string>
+    <string name="setup_step1">Instale a extensão Estudos Plus no navegador do computador.</string>
+    <string name="setup_step2">Clique no ícone da extensão e copie o seu código.</string>
+    <string name="setup_step3">Digite o código abaixo. Pronto, tudo fica sincronizado.</string>
+    <string name="code_hint">Código de sincronização</string>
+    <string name="code_help">Exemplo: lua-7K2Q9P</string>
     <string name="connect">Conectar</string>
-    <string name="error_code_invalid">Código inválido: use de 4 a 64 letras, números, \"-\" ou \"_\".</string>
+    <string name="error_code_invalid">Código inválido. Use de 4 a 64 letras, números, \"-\" ou \"_\".</string>
     <string name="server_unreachable_title">Sem conexão</string>
     <string name="server_unreachable_msg">Não foi possível conectar agora. Verifique a internet do celular e tente de novo.</string>
     <string name="save_anyway">Salvar mesmo assim</string>
     <string name="cancel">Cancelar</string>
 
-    <string name="code_label">Código: %1$s</string>
+    <!-- Lista -->
+    <string name="code_label">Código %1$s</string>
     <string name="status_online">Sincronizado</string>
     <string name="status_offline">Offline</string>
-    <string name="search_hint">Buscar frase, filme, série…</string>
+    <string name="search_hint">Buscar frases, filmes, séries</string>
     <string name="filter_all">Todas</string>
-    <string name="filter_favorites">★ Favoritas</string>
+    <string name="filter_favorites">Favoritas</string>
     <string name="empty_title">Nenhuma frase ainda</string>
-    <string name="empty_body">No computador, abra um filme ou vídeo com legendas e aperte Alt+C (ou o botão “Copiar frase” sobre o vídeo). A frase aparece aqui na hora.</string>
+    <string name="empty_body">No computador, abra um vídeo com legendas e pressione Alt+C. A frase aparece aqui na hora.</string>
+    <string name="no_results">Nenhuma frase encontrada para este filtro.</string>
     <plurals name="phrase_count">
         <item quantity="one">%d frase</item>
         <item quantity="other">%d frases</item>
     </plurals>
 
+    <!-- Ações -->
     <string name="copy">Copiar</string>
     <string name="copied">Frase copiada</string>
-    <string name="open">Abrir</string>
+    <string name="open">Abrir no vídeo</string>
     <string name="share">Compartilhar</string>
     <string name="delete">Apagar</string>
     <string name="deleted">Frase apagada</string>
     <string name="undo">Desfazer</string>
     <string name="favorite">Favoritar</string>
+    <string name="unfavorite">Remover dos favoritos</string>
+    <string name="menu">Mais opções</string>
     <string name="error_offline_action">Sem conexão com o servidor. Tente novamente.</string>
     <string name="error_open">Nenhum app para abrir este link.</string>
     <string name="nothing_to_export">Nada para exportar.</string>
 
     <string name="menu_refresh">Atualizar</string>
-    <string name="menu_export">Exportar / compartilhar lista</string>
+    <string name="menu_export">Exportar lista</string>
     <string name="menu_change_code">Trocar código</string>
+    <string name="menu_about">Sobre</string>
+    <string name="about_msg">Estudos Plus %1$s\n\nSalve frases de filmes, séries e vídeos com a extensão do navegador e revise tudo aqui.</string>
 </resources>

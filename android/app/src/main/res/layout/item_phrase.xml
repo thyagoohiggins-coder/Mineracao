@@ -5,44 +5,36 @@
     style="@style/Widget.Material3.CardView.Outlined"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="4dp"
     android:layout_marginTop="10dp"
     android:clickable="true"
     android:focusable="true"
     app:cardBackgroundColor="@color/card"
-    app:cardCornerRadius="14dp">
+    app:cardCornerRadius="18dp"
+    app:strokeColor="?attr/colorOutlineVariant">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="4dp">
+        android:paddingStart="18dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="6dp">
 
-        <TextView
-            android:id="@+id/quote"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:lineSpacingMultiplier="1.15"
-            android:textColor="@color/fg"
-            android:textIsSelectable="false"
-            android:textSize="18sp" />
-
+        <!-- Serviço + título -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingEnd="10dp">
 
             <TextView
                 android:id="@+id/badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="7dp"
-                android:paddingVertical="1dp"
-                android:textColor="#FFFFFF"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="2dp"
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
@@ -54,77 +46,78 @@
                 android:layout_weight="1"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="@color/fg"
-                android:textSize="13sp" />
-
-            <TextView
-                android:id="@+id/time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:textColor="@color/muted"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:textSize="13sp" />
         </LinearLayout>
 
+        <!-- Frase -->
         <TextView
-            android:id="@+id/date"
-            android:layout_width="wrap_content"
+            android:id="@+id/quote"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="@color/muted"
-            android:textSize="12sp" />
+            android:layout_marginTop="10dp"
+            android:lineSpacingExtra="4sp"
+            android:paddingEnd="10dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="17sp" />
 
+        <!-- Rodapé: tempo + ações -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
             android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/meta"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="12sp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/copyButton"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:text="@string/copy" />
+                style="@style/Widget.EstudosPlus.IconAction"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="@string/copy"
+                app:icon="@drawable/ic_copy" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/favoriteButton"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                style="@style/Widget.EstudosPlus.IconAction"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:contentDescription="@string/favorite"
-                android:minWidth="0dp"
-                android:textSize="18sp" />
+                app:icon="@drawable/ic_star_border" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/openButton"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:text="@string/open" />
+                style="@style/Widget.EstudosPlus.IconAction"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="@string/open"
+                app:icon="@drawable/ic_open" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/shareButton"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:text="@string/share" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+                style="@style/Widget.EstudosPlus.IconAction"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="@string/share"
+                app:icon="@drawable/ic_share" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/deleteButton"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="0dp"
-                android:text="@string/delete"
-                android:textColor="@color/muted" />
+                style="@style/Widget.EstudosPlus.IconAction"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="@string/delete"
+                app:icon="@drawable/ic_delete" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

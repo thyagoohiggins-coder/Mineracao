@@ -1,4 +1,4 @@
-package com.cinefrases.app;
+package com.estudosplus.app;
 
 import android.content.Context;
 

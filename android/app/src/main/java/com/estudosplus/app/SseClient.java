@@ -1,4 +1,4 @@
-package com.cinefrases.app;
+package com.estudosplus.app;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class SseClient {
     public synchronized void start() {
         if (running) return;
         running = true;
-        thread = new Thread(this::loop, "cinefrases-sse");
+        thread = new Thread(this::loop, "estudosplus-sse");
         thread.setDaemon(true);
         thread.start();
     }

@@ -1,11 +1,11 @@
-package com.cinefrases.app;
+package com.estudosplus.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
 /** Configurações salvas no aparelho (só o código de sincronização; o servidor é fixo). */
 public final class Prefs {
-    private static final String FILE = "cinefrases";
+    private static final String FILE = "estudosplus";
     private static final String KEY_CODE = "syncCode";
 
     private Prefs() {}
