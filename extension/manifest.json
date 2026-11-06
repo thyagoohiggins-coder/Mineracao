@@ -2,41 +2,54 @@
   "manifest_version": 3,
   "name": "CineFrases — copie frases de filmes e séries",
   "short_name": "CineFrases",
-  "version": "1.0.0",
-  "description": "Copie a legenda que está na tela com um clique ou Alt+C (Netflix, Disney+, Max, Prime Video, YouTube...) e sincronize com o app.",
-  "permissions": ["storage", "clipboardWrite", "alarms", "activeTab"],
-  "host_permissions": ["http://*/*", "https://*/*"],
-  "background": { "service_worker": "background.js" },
+  "version": "1.1.0",
+  "description": "Copie a legenda que está na tela com um clique ou Alt+C (Netflix, Disney+, Max, Prime Video, YouTube e qualquer vídeo com legenda) e receba no app.",
+  "permissions": [
+    "storage",
+    "clipboardWrite",
+    "alarms",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
-    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
-  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "commands": {
     "copy-phrase": {
-      "suggested_key": { "default": "Alt+Shift+C", "mac": "Alt+Shift+C" },
+      "suggested_key": {
+        "default": "Alt+Shift+C",
+        "mac": "Alt+Shift+C"
+      },
       "description": "Copiar a frase que está na tela"
     }
   },
   "content_scripts": [
     {
       "matches": [
-        "*://*.netflix.com/*",
-        "*://*.youtube.com/*",
-        "*://*.disneyplus.com/*",
-        "*://*.max.com/*",
-        "*://*.hbomax.com/*",
-        "*://*.primevideo.com/*",
-        "*://*.amazon.com/*",
-        "*://*.amazon.com.br/*",
-        "*://*.globoplay.globo.com/*",
-        "*://*.paramountplus.com/*",
-        "*://*.crunchyroll.com/*",
-        "*://*.apple.com/*"
+        "<all_urls>"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle",
-      "all_frames": true
+      "all_frames": true,
+      "match_about_blank": true
     }
   ]
 }

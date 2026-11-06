@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- HTTPS (Cloudflare) é o padrão; HTTP fica liberado para quem roda o servidor no PC da rede local. -->
+<!-- Só HTTPS (Cloudflare). HTTP liberado apenas para o servidor local do emulador, usado nos prints/testes. -->
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true" />
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
 </network-security-config>

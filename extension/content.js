@@ -1,28 +1,44 @@
 // CineFrases — content script
-// Lê a legenda que está na tela do player, guarda as últimas falas e copia/sincroniza com Alt+C ou pelo botão.
+// Detecta a legenda que está na tela do player, guarda as últimas falas e copia/sincroniza com Alt+C ou pelo botão.
 (() => {
   'use strict';
-  if (window.__cineFrases) return;
-  window.__cineFrases = true;
 
-  // ---------- Seletores de legenda por serviço ----------
+  // Se a extensão foi recarregada, a instância antiga desta aba se desliga e esta assume.
+  const INSTANCE = Math.random().toString(36).slice(2);
+  document.dispatchEvent(new CustomEvent('cinefrases:takeover', { detail: INSTANCE }));
+  const cleanups = [];
+  document.addEventListener('cinefrases:takeover', function onTakeover(e) {
+    if (e.detail === INSTANCE) return;
+    document.removeEventListener('cinefrases:takeover', onTakeover);
+    cleanups.forEach((fn) => { try { fn(); } catch { /* ignore */ } });
+  });
+  const alive = () => { try { return !!chrome.runtime.id; } catch { return false; } };
+
+  // ---------- Seletores conhecidos por serviço (se falharem, há detecção genérica) ----------
   const SITES = [
-    { id: 'youtube', name: 'YouTube', host: /(^|\.)youtube\.com$/, lines: ['.ytp-caption-window-container .caption-visual-line'], cues: ['.ytp-caption-segment'],
-      title: () => text(document.querySelector('ytd-watch-metadata h1, h1.ytd-watch-metadata, h1.title')) || document.title.replace(/ - YouTube$/, '') },
+    { id: 'youtube', name: 'YouTube', host: /(^|\.)youtube(-nocookie)?\.com$/, lines: ['.ytp-caption-window-container .caption-visual-line'], cues: ['.ytp-caption-segment'],
+      title: () => text(q('ytd-watch-metadata h1, h1.ytd-watch-metadata, h1.title')) || document.title.replace(/ - YouTube$/, '') },
     { id: 'netflix', name: 'Netflix', host: /(^|\.)netflix\.com$/, cues: ['.player-timedtext-text-container', '.player-timedtext'],
-      title: () => text(document.querySelector('[data-uia="video-title"]'), ' · ') },
-    { id: 'disney', name: 'Disney+', host: /(^|\.)disneyplus\.com$/, cues: ['.dss-subtitle-renderer-cue-window', '.hive-subtitle-renderer-cue-window', '.dss-subtitle-renderer-line', '.hive-subtitle-renderer-line', '[class*="subtitle-renderer"] [class*="cue"]'],
-      title: () => text(document.querySelector('.title-field, [data-testid="title-field"], .title-bug-area .title-field')) },
+      title: () => text(q('[data-uia="video-title"]'), ' · ') },
+    { id: 'disney', name: 'Disney+', host: /(^|\.)disneyplus\.com$/, cues: ['.hive-subtitle-renderer-line', '.dss-subtitle-renderer-line', '.hive-subtitle-renderer-cue-window', '.dss-subtitle-renderer-cue-window', '[class*="subtitle-renderer"]'],
+      title: () => text(q('.title-field, [data-testid="title-field"], .title-bug-area .title-field')) },
     { id: 'max', name: 'Max', host: /(^|\.)(max|hbomax)\.com$/, cues: ['[data-testid="CueBoxContainer"]', '[data-testid="caption_renderer_overlay"]', '[class*="CaptionWindow"]', '[class*="TextCue"]'],
-      title: () => text(document.querySelector('[data-testid="player-ux-asset-title"], [class*="AssetTitle"]')) },
+      title: () => text(q('[data-testid="player-ux-asset-title"], [class*="AssetTitle"]')) },
     { id: 'prime', name: 'Prime Video', host: /(^|\.)(primevideo\.com|amazon\.[a-z.]+)$/, cues: ['.atvwebplayersdk-captions-text'],
-      title: () => text(document.querySelector('.atvwebplayersdk-title-text')) },
-    { id: 'globoplay', name: 'Globoplay', host: /(^|\.)globo\.com$/, cues: ['.vjs-text-track-display div > div', '[class*="subtitle"] span'] },
-    { id: 'paramount', name: 'Paramount+', host: /(^|\.)paramountplus\.com$/, cues: ['.vjs-text-track-display div > div', '[class*="caption"] span'] },
-    { id: 'crunchyroll', name: 'Crunchyroll', host: /(^|\.)crunchyroll\.com$/, cues: ['[class*="subtitle"]', '.vjs-text-track-display div > div'] },
-    { id: 'appletv', name: 'Apple TV+', host: /(^|\.)apple\.com$/, cues: ['[class*="subtitles"] [class*="cue"]', 'amp-video-player-internal [class*="caption"]'] },
+      title: () => text(q('.atvwebplayersdk-title-text')) },
+    { id: 'globoplay', name: 'Globoplay', host: /(^|\.)globo\.com$/, cues: ['.vjs-text-track-display div > div'] },
+    { id: 'paramount', name: 'Paramount+', host: /(^|\.)paramountplus\.com$/, cues: ['.vjs-text-track-display div > div'] },
+    { id: 'crunchyroll', name: 'Crunchyroll', host: /(^|\.)crunchyroll\.com$/, cues: ['.vjs-text-track-display div > div'] },
+    { id: 'appletv', name: 'Apple TV+', host: /(^|\.)apple\.com$/, cues: [] },
   ];
-  const site = SITES.find((s) => s.host.test(location.hostname)) || { id: 'outro', name: location.hostname, cues: [] };
+  const site = SITES.find((s) => s.host.test(location.hostname)) || { id: 'outro', name: location.hostname.replace(/^www\./, ''), cues: [] };
+
+  // Qualquer elemento de legenda/caption sobre o vídeo (plano B quando o site muda o HTML)
+  const GENERIC = [
+    '[class*="caption" i]', '[class*="subtitle" i]', '[class*="timedtext" i]', '[class*="cue" i]', '[class*="legenda" i]',
+    '[id*="caption" i]', '[id*="subtitle" i]', '[data-testid*="caption" i]', '[data-testid*="subtitle" i]', '[data-testid*="cue" i]',
+  ].join(',');
+  const NOT_SUBTITLE = /(button|btn|menu|setting|toggle|icon|control|track-?select|picker|option|label|tooltip|badge)/i;
 
   // ---------- Utilidades ----------
   function text(el, sep = ' ') {
@@ -30,45 +46,102 @@
     return (el.innerText || el.textContent || '').split('\n').map((l) => l.trim()).filter(Boolean).join(sep);
   }
   const clean = (s) => s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  const visible = (el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).opacity !== '0';
 
-  function uniqueTopLevel(els) {
-    return els.filter((el) => !els.some((o) => o !== el && o.contains(el)));
+  // Shadow DOM: muitos players (ex.: Disney+) colocam o vídeo e a legenda dentro dele
+  const shadowOf = (el) => {
+    try { if (chrome.dom && chrome.dom.openOrClosedShadowRoot) return chrome.dom.openOrClosedShadowRoot(el); } catch { /* ignore */ }
+    return el.shadowRoot;
+  };
+  let roots = [document], rootsAt = 0;
+  function allRoots() {
+    if (Date.now() - rootsAt < 2000) return roots;
+    rootsAt = Date.now();
+    const out = [document];
+    const walk = (root) => {
+      const tw = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+      for (let el = tw.nextNode(); el; el = tw.nextNode()) {
+        if (el.id === 'cinefrases-root') continue;
+        const sr = shadowOf(el);
+        if (sr) { out.push(sr); walk(sr); }
+      }
+    };
+    try { walk(document.documentElement); } catch { /* ignore */ }
+    roots = out;
+    return roots;
+  }
+  function qsa(sel) {
+    const out = [];
+    for (const r of allRoots()) { try { out.push(...r.querySelectorAll(sel)); } catch { /* seletor inválido */ } }
+    return out;
+  }
+  const q = (sel) => qsa(sel)[0] || null;
+
+  function visible(el) {
+    if (!el.getClientRects().length) return false;
+    const cs = getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
+  }
+  const uniqueTopLevel = (els) => els.filter((el) => !els.some((o) => o !== el && o.contains(el)));
+  const byPosition = (a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top || a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+
+  function mainVideo() {
+    let best = null, area = 0;
+    for (const v of qsa('video')) {
+      const r = v.getBoundingClientRect();
+      if (r.width * r.height > area) { area = r.width * r.height; best = v; }
+    }
+    return area > 0 ? best : null;
   }
 
+  // ---------- Leitura da legenda ----------
   function readBySelectors(selectors) {
     for (const sel of selectors || []) {
-      let els;
-      try { els = [...document.querySelectorAll(sel)]; } catch { continue; }
-      els = uniqueTopLevel(els.filter(visible));
+      const els = uniqueTopLevel(qsa(sel).filter(visible)).sort(byPosition);
       const t = clean(els.map((e) => text(e)).filter(Boolean).join(' '));
       if (t) return t;
     }
     return '';
   }
 
-  function readTextTracks() {
-    for (const v of document.querySelectorAll('video')) {
+  function readTextTracks(video) {
+    for (const v of video ? [video, ...qsa('video')] : qsa('video')) {
       for (const track of v.textTracks || []) {
-        if (track.mode === 'disabled' || !track.activeCues) continue;
-        const t = clean([...track.activeCues].map((c) => c.text || '').join(' '));
+        if (track.mode === 'disabled' || !track.cues) continue;
+        let cues = track.activeCues ? [...track.activeCues] : [];
+        if (!cues.length) { // calcula pelo tempo do vídeo, caso o navegador não tenha atualizado activeCues
+          const now = v.currentTime;
+          cues = [...track.cues].filter((c) => c.startTime <= now && now < c.endTime);
+        }
+        const t = clean(cues.map((c) => c.text || '').join(' '));
         if (t) return t;
       }
     }
     return '';
   }
 
-  function currentSubtitle() {
-    return readBySelectors(site.lines) || readBySelectors(site.cues) || readTextTracks();
+  function readGeneric(video) {
+    if (!video) return '';
+    const vr = video.getBoundingClientRect();
+    let els = qsa(GENERIC).filter((el) => {
+      if (el.id === 'cinefrases-root' || /^(BUTTON|INPUT|SELECT|OPTION|LABEL|A|VIDEO|TRACK|svg)$/i.test(el.tagName)) return false;
+      const cls = `${typeof el.className === 'string' ? el.className : ''} ${el.id} ${el.getAttribute('data-testid') || ''}`;
+      if (NOT_SUBTITLE.test(cls)) return false;
+      if (el.closest('button,[role="button"],[role="menu"],[role="menuitem"],[role="dialog"],[role="listbox"]')) return false;
+      if (!visible(el)) return false;
+      const r = el.getBoundingClientRect();
+      if (!(r.left < vr.right && r.right > vr.left && r.top < vr.bottom && r.bottom > vr.top)) return false; // sobre o vídeo
+      if (el.querySelector('button,input,select,a[href]')) return false;
+      const t = text(el);
+      return t && t.length <= 400;
+    });
+    els = uniqueTopLevel(els).sort(byPosition);
+    return clean(els.map((e) => text(e)).join(' '));
   }
 
-  function mainVideo() {
-    let best = null, area = 0;
-    for (const v of document.querySelectorAll('video')) {
-      const r = v.getBoundingClientRect();
-      if (r.width * r.height > area) { area = r.width * r.height; best = v; }
-    }
-    return best;
+  function currentSubtitle() {
+    const v = mainVideo();
+    if (!v) return '';
+    return readBySelectors(site.lines) || readBySelectors(site.cues) || readTextTracks(v) || readGeneric(v);
   }
 
   function videoTitle() {
@@ -80,7 +153,7 @@
 
   function shareUrl(seconds) {
     if (site.id === 'youtube') {
-      const id = new URLSearchParams(location.search).get('v');
+      const id = new URLSearchParams(location.search).get('v') || (location.pathname.match(/\/embed\/([\w-]+)/) || [])[1];
       if (id) return `https://www.youtube.com/watch?v=${id}${seconds != null ? `&t=${Math.floor(seconds)}s` : ''}`;
     }
     try { return window.top.location.href; } catch { return location.href; }
@@ -94,16 +167,19 @@
   };
 
   // ---------- Histórico das últimas falas ----------
-  const HISTORY_MAX = 15;
+  const HISTORY_MAX = 20;
   const history = []; // { text, videoTime, at }
   let current = '';
+  let hasVideo = false;
 
   function tick() {
-    const t = currentSubtitle();
+    if (!alive()) return;
+    const v = mainVideo();
+    hasVideo = !!v;
+    const t = v ? currentSubtitle() : '';
     if (t === current) return;
     current = t;
     if (t) {
-      const v = mainVideo();
       const last = history[history.length - 1];
       if (!last || last.text !== t) {
         history.push({ text: t, videoTime: v ? v.currentTime : null, at: Date.now() });
@@ -112,7 +188,6 @@
     }
     ui.update();
   }
-  setInterval(tick, 250);
 
   // ---------- Copiar + sincronizar ----------
   async function writeClipboard(t) {
@@ -136,8 +211,18 @@
   }
 
   async function copyPhrase(entry) {
-    entry = entry || (current ? { text: current, videoTime: mainVideo()?.currentTime ?? null } : history[history.length - 1]);
-    if (!entry || !entry.text) { ui.toast('Nenhuma legenda na tela. Ative as legendas do player.', 'warn'); return; }
+    const v = mainVideo();
+    if (!entry) {
+      const live = currentSubtitle();
+      const selected = clean(String(window.getSelection() || ''));
+      if (live) entry = { text: live, videoTime: v ? v.currentTime : null };
+      else if (selected) entry = { text: selected, videoTime: v ? v.currentTime : null };
+      else if (history.length && Date.now() - history[history.length - 1].at < 15000) entry = history[history.length - 1];
+    }
+    if (!entry || !entry.text) {
+      ui.toast('Nenhuma legenda na tela', 'warn', 'Ative as legendas (CC) do player e tente de novo.');
+      return;
+    }
 
     const copied = await writeClipboard(entry.text);
     const phrase = {
@@ -154,14 +239,12 @@
     let res = null;
     try { res = await chrome.runtime.sendMessage({ type: 'phrase', phrase }); } catch { /* extensão recarregada */ }
 
-    const sync = !res ? 'extensão desconectada — recarregue a página'
-      : res.synced ? 'enviada para o app'
-      : res.reason === 'no-code' ? 'configure a extensão (ícone do CineFrases)'
-      : 'sem conexão — será enviada depois';
-    ui.toast(`${copied ? 'Copiado' : 'Salvo'} ✓ ${sync}`, res && res.synced ? 'ok' : 'warn', entry.text);
+    if (!res) ui.toast(copied ? 'Copiada' : 'Não foi possível copiar', 'warn', 'Recarregue a página para sincronizar.');
+    else if (res.synced) ui.toast(copied ? 'Copiada e enviada ao app' : 'Enviada ao app', 'ok', entry.text);
+    else ui.toast(copied ? 'Copiada — envio pendente' : 'Envio pendente', 'warn', 'Sem conexão agora. Será enviada automaticamente.');
   }
 
-  // ---------- Interface (Shadow DOM para não conflitar com o site) ----------
+  // ---------- Interface (Shadow DOM fechado para não conflitar com o site) ----------
   const ui = (() => {
     const host = document.createElement('div');
     host.id = 'cinefrases-root';
@@ -170,41 +253,52 @@
     root.innerHTML = `
       <style>
         :host { all: initial; }
-        * { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-        .wrap { position: fixed; right: 24px; bottom: 96px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; pointer-events: none; }
-        .bar { display: flex; gap: 6px; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; pointer-events: auto; }
-        .bar.show, .bar:hover { opacity: 1; transform: none; }
-        button { all: unset; cursor: pointer; background: rgba(20,20,28,.88); color: #fff; border: 1px solid rgba(255,255,255,.18);
-          border-radius: 999px; padding: 9px 14px; font-size: 14px; font-weight: 600; backdrop-filter: blur(8px); display: inline-flex; gap: 6px; align-items: center; }
-        button:hover { background: #e50914; border-color: #e50914; }
-        button.ghost { padding: 9px 11px; }
-        .hint { font-weight: 400; opacity: .6; font-size: 12px; }
-        .panel { pointer-events: auto; width: min(440px, 80vw); max-height: 50vh; overflow: auto; background: rgba(16,16,22,.95); color: #fff;
-          border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 8px; display: none; backdrop-filter: blur(10px); }
+        * { box-sizing: border-box; margin: 0; font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrap { position: fixed; right: 24px; bottom: 96px; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none; }
+        .bar { display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 14px; background: rgba(12,12,16,.72);
+          border: 1px solid rgba(255,255,255,.12); box-shadow: 0 10px 30px rgba(0,0,0,.35); backdrop-filter: blur(14px) saturate(140%);
+          opacity: 0; transform: translateY(6px) scale(.98); transition: opacity .18s ease, transform .18s ease; pointer-events: none; }
+        .bar.show, .bar:hover { opacity: 1; transform: none; pointer-events: auto; }
+        button { all: unset; cursor: pointer; color: #fff; border-radius: 10px; height: 34px; padding: 0 12px; font-size: 13px; font-weight: 600;
+          display: inline-flex; gap: 8px; align-items: center; transition: background .15s; }
+        button:hover { background: rgba(255,255,255,.12); }
+        button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+        .copy .q { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: #e50914; font-size: 15px; line-height: 1; padding-top: 4px; }
+        kbd { font: 600 11px/1 ui-monospace, monospace; color: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.2); border-radius: 5px; padding: 3px 5px; }
+        .sep { width: 1px; height: 18px; background: rgba(255,255,255,.14); }
+        .hist { padding: 0 10px; color: rgba(255,255,255,.8); }
+        .panel { pointer-events: auto; width: min(420px, 80vw); max-height: 46vh; overflow: auto; background: rgba(12,12,16,.9); color: #fff;
+          border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 6px; display: none; backdrop-filter: blur(14px);
+          box-shadow: 0 20px 50px rgba(0,0,0,.5); }
         .panel.open { display: block; }
-        .panel h4 { margin: 4px 8px 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; opacity: .6; font-weight: 600; }
-        .item { display: flex; gap: 10px; padding: 9px 10px; border-radius: 9px; cursor: pointer; font-size: 14px; line-height: 1.35; }
-        .item:hover { background: rgba(255,255,255,.09); }
+        .panel header { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px 6px; font-size: 11px;
+          text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.55); font-weight: 600; }
+        .item { display: flex; gap: 12px; align-items: baseline; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 14px; line-height: 1.4; }
+        .item:hover { background: rgba(255,255,255,.08); }
         .item .t { flex: 1; }
-        .item .time { opacity: .5; font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 2px; }
-        .empty { padding: 12px; opacity: .6; font-size: 13px; }
-        .toast { pointer-events: none; max-width: min(460px, 80vw); background: rgba(16,16,22,.95); color: #fff; border-left: 4px solid #22c55e;
-          border-radius: 10px; padding: 10px 14px; font-size: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.4); opacity: 0; transform: translateY(8px); transition: .25s; }
-        .toast.warn { border-left-color: #f59e0b; }
+        .item .time { color: rgba(255,255,255,.45); font-size: 12px; font-variant-numeric: tabular-nums; }
+        .empty { padding: 14px 10px; color: rgba(255,255,255,.6); font-size: 13px; }
+        .toast { display: flex; gap: 12px; align-items: flex-start; pointer-events: none; max-width: min(420px, 80vw); background: rgba(12,12,16,.92); color: #fff;
+          border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 12px 14px; box-shadow: 0 16px 40px rgba(0,0,0,.45);
+          backdrop-filter: blur(14px); opacity: 0; transform: translateY(8px); transition: .22s ease; }
         .toast.show { opacity: 1; transform: none; }
-        .toast q { display: block; margin-top: 4px; opacity: .75; font-style: italic; font-size: 13px; quotes: "“" "”"; }
+        .toast .ic { flex: 0 0 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; background: #22c55e; color: #04130a; }
+        .toast.warn .ic { background: #f59e0b; color: #1f1300; }
+        .toast b { display: block; font-size: 14px; font-weight: 600; }
+        .toast span.d { display: block; margin-top: 3px; color: rgba(255,255,255,.7); font-size: 13px; line-height: 1.4; }
       </style>
       <div class="wrap">
-        <div class="toast"></div>
-        <div class="panel"><h4>Últimas falas — clique para copiar</h4><div class="list"></div></div>
+        <div class="toast" role="status"><div class="ic">✓</div><div><b></b><span class="d"></span></div></div>
+        <div class="panel"><header><span>Últimas falas</span><span>clique para copiar</span></header><div class="list"></div></div>
         <div class="bar">
-          <button class="copy" title="Copiar a frase da tela (Alt+C)">❝ Copiar frase <span class="hint">Alt+C</span></button>
-          <button class="ghost hist" title="Últimas falas (Alt+X)">⟲</button>
+          <button class="copy" title="Copiar a frase da tela"><span class="q">❝</span>Copiar frase <kbd>Alt C</kbd></button>
+          <span class="sep"></span>
+          <button class="hist" title="Últimas falas (Alt+X)">Histórico</button>
         </div>
       </div>`;
 
     const $ = (s) => root.querySelector(s);
-    const bar = $('.bar'), panel = $('.panel'), list = $('.list'), toastEl = $('.toast');
+    const wrap = $('.wrap'), bar = $('.bar'), panel = $('.panel'), list = $('.list'), toastEl = $('.toast');
     let enabled = true, showBtn = true, hideTimer, toastTimer;
 
     // Impede que o clique pause o vídeo ou dispare atalhos do player
@@ -215,28 +309,26 @@
     $('.copy').addEventListener('click', () => copyPhrase());
     $('.hist').addEventListener('click', () => togglePanel());
 
-    const wrap = $('.wrap');
     function attach() {
       const parent = document.fullscreenElement || document.webkitFullscreenElement || document.documentElement;
       if (host.parentNode !== parent) parent.appendChild(host);
-      // posiciona no canto inferior direito do vídeo (acima dos controles do player)
       const v = mainVideo();
       const r = v && v.getBoundingClientRect();
-      if (r && r.width > 200 && r.height > 120) {
-        wrap.style.right = `${Math.max(12, innerWidth - Math.min(r.right, innerWidth) + 20)}px`;
-        wrap.style.bottom = `${Math.max(12, innerHeight - Math.min(r.bottom, innerHeight) + 70)}px`;
+      if (r && r.width > 420 && r.height > 260) {
+        // canto inferior direito do vídeo, acima dos controles do player — sem sair da tela
+        wrap.style.right = `${Math.min(innerWidth - 200, Math.max(12, innerWidth - Math.min(r.right, innerWidth) + 20))}px`;
+        wrap.style.bottom = `${Math.min(innerHeight * 0.45, Math.max(12, innerHeight - Math.min(r.bottom, innerHeight) + 80))}px`;
       } else {
         wrap.style.right = '24px';
         wrap.style.bottom = '96px';
       }
     }
-    document.addEventListener('fullscreenchange', attach);
-    document.addEventListener('webkitfullscreenchange', attach);
-
-    function hasPlayer() { return !!mainVideo(); }
+    const onFs = () => attach();
+    document.addEventListener('fullscreenchange', onFs);
+    document.addEventListener('webkitfullscreenchange', onFs);
 
     function showBar() {
-      if (!enabled || !showBtn || !hasPlayer()) return;
+      if (!enabled || !showBtn || !hasVideo) return;
       attach();
       bar.classList.add('show');
       clearTimeout(hideTimer);
@@ -249,7 +341,7 @@
       if (!history.length) {
         const d = document.createElement('div');
         d.className = 'empty';
-        d.textContent = 'Nenhuma fala capturada ainda. Ative as legendas do vídeo.';
+        d.textContent = 'Nenhuma fala capturada ainda. Ative as legendas (CC) do vídeo.';
         list.appendChild(d);
         return;
       }
@@ -270,20 +362,31 @@
       if (open) renderPanel();
     }
 
-    function toast(msg, kind = 'ok', quote) {
+    function toast(title, kind = 'ok', detail = '') {
       attach();
       toastEl.className = `toast ${kind}`;
-      toastEl.textContent = msg;
-      if (quote) { const q = document.createElement('q'); q.textContent = quote.length > 140 ? quote.slice(0, 140) + '…' : quote; toastEl.appendChild(q); }
+      $('.toast .ic').textContent = kind === 'ok' ? '✓' : '!';
+      $('.toast b').textContent = title;
+      const d = detail.length > 160 ? detail.slice(0, 160) + '…' : detail;
+      $('.toast .d').textContent = kind === 'ok' && detail ? `“${d}”` : d;
       requestAnimationFrame(() => toastEl.classList.add('show'));
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2800);
     }
 
-    chrome.storage.local.get({ enabled: true, showButton: true }, (c) => { enabled = c.enabled; showBtn = c.showButton; });
-    chrome.storage.onChanged.addListener((ch) => {
-      if (ch.enabled) enabled = ch.enabled.newValue;
-      if (ch.showButton) showBtn = ch.showButton.newValue;
+    try {
+      chrome.storage.local.get({ enabled: true, showButton: true }, (c) => { enabled = c.enabled; showBtn = c.showButton; });
+      chrome.storage.onChanged.addListener((ch) => {
+        if (ch.enabled) enabled = ch.enabled.newValue;
+        if (ch.showButton) showBtn = ch.showButton.newValue;
+      });
+    } catch { /* extensão recarregada */ }
+
+    cleanups.push(() => {
+      host.remove();
+      document.removeEventListener('mousemove', showBar);
+      document.removeEventListener('fullscreenchange', onFs);
+      document.removeEventListener('webkitfullscreenchange', onFs);
     });
 
     return {
@@ -293,18 +396,32 @@
     };
   })();
 
+  const timer = setInterval(tick, 250);
+  cleanups.push(() => clearInterval(timer));
+
   // ---------- Atalhos ----------
-  window.addEventListener('keydown', (e) => {
-    if (!ui.enabled || !e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  const onKey = (e) => {
+    if (!alive() || !ui.enabled || !hasVideo) return;
+    if (e.key === 'Escape') { ui.togglePanel(false); return; }
+    if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
     const tag = (e.target && e.target.tagName) || '';
     if (/INPUT|TEXTAREA|SELECT/.test(tag) || (e.target && e.target.isContentEditable)) return;
     if (e.code === 'KeyC') { e.preventDefault(); e.stopPropagation(); copyPhrase(); }
     else if (e.code === 'KeyX') { e.preventDefault(); e.stopPropagation(); ui.togglePanel(); }
-  }, true);
-  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') ui.togglePanel(false); }, true);
+  };
+  window.addEventListener('keydown', onKey, true);
+  cleanups.push(() => window.removeEventListener('keydown', onKey, true));
 
-  chrome.runtime.onMessage.addListener((msg) => {
-    if (msg && msg.type === 'copy-now' && (current || history.length) && mainVideo()) copyPhrase();
-  });
-
+  // Mensagens do popup / atalho global. Só responde o frame que tem vídeo.
+  const onMessage = (msg, _sender, sendResponse) => {
+    if (!msg || !hasVideo) return false;
+    if (msg.type === 'copy-now') { copyPhrase(); return false; }
+    if (msg.type === 'status') {
+      sendResponse({ site: site.name, video: true, subtitle: currentSubtitle(), captured: history.length });
+      return false;
+    }
+    return false;
+  };
+  chrome.runtime.onMessage.addListener(onMessage);
+  cleanups.push(() => { try { chrome.runtime.onMessage.removeListener(onMessage); } catch { /* ignore */ } });
 })();

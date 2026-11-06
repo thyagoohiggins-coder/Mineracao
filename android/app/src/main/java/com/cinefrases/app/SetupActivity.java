@@ -14,11 +14,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 
-import java.security.SecureRandom;
-
 /** Tela de conexão: endereço do servidor + código de sincronização (o mesmo da extensão). */
 public class SetupActivity extends AppCompatActivity {
-    private TextInputEditText serverInput;
     private TextInputEditText codeInput;
     private Button connectButton;
     private ProgressBar progress;
@@ -30,33 +27,20 @@ public class SetupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setup);
 
-        serverInput = findViewById(R.id.serverInput);
         codeInput = findViewById(R.id.codeInput);
         connectButton = findViewById(R.id.connectButton);
         progress = findViewById(R.id.progress);
         errorText = findViewById(R.id.errorText);
 
-        String saved = Prefs.serverUrl(this);
-        serverInput.setText(saved.isEmpty() ? getString(R.string.default_server_url) : saved);
         codeInput.setText(Prefs.syncCode(this));
 
-        findViewById(R.id.generateButton).setOnClickListener(v -> codeInput.setText(randomCode()));
         connectButton.setOnClickListener(v -> connect());
     }
 
     private void connect() {
-        String server = ApiClient.normalizeUrl(text(serverInput));
         String code = text(codeInput);
         errorText.setVisibility(View.GONE);
 
-        if (server.isEmpty()) {
-            showError(getString(R.string.error_server_empty));
-            return;
-        }
-        if (server.contains(getString(R.string.server_placeholder))) {
-            showError(getString(R.string.error_server_placeholder));
-            return;
-        }
         if (!ApiClient.isValidCode(code)) {
             showError(getString(R.string.error_code_invalid));
             return;
@@ -64,16 +48,16 @@ public class SetupActivity extends AppCompatActivity {
 
         setBusy(true);
         new Thread(() -> {
-            boolean ok = new ApiClient(server, code).ping();
+            boolean ok = new ApiClient(Prefs.serverUrl(), code).ping();
             main.post(() -> {
                 setBusy(false);
                 if (ok) {
-                    finishSetup(server, code);
+                    finishSetup(code);
                 } else {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.server_unreachable_title)
-                            .setMessage(getString(R.string.server_unreachable_msg, server))
-                            .setPositiveButton(R.string.save_anyway, (d, w) -> finishSetup(server, code))
+                            .setMessage(R.string.server_unreachable_msg)
+                            .setPositiveButton(R.string.save_anyway, (d, w) -> finishSetup(code))
                             .setNegativeButton(R.string.cancel, null)
                             .show();
                 }
@@ -81,10 +65,9 @@ public class SetupActivity extends AppCompatActivity {
         }).start();
     }
 
-    private void finishSetup(String server, String code) {
-        boolean changed = !code.equals(Prefs.syncCode(this)) || !server.equals(Prefs.serverUrl(this));
-        if (changed) PhraseCache.clear(this);
-        Prefs.save(this, server, code);
+    private void finishSetup(String code) {
+        if (!code.equals(Prefs.syncCode(this))) PhraseCache.clear(this);
+        Prefs.saveCode(this, code);
         Intent i = new Intent(this, MainActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
@@ -103,15 +86,5 @@ public class SetupActivity extends AppCompatActivity {
 
     private static String text(TextInputEditText e) {
         return e.getText() == null ? "" : e.getText().toString().trim();
-    }
-
-    /** Mesmo formato do código gerado pela extensão (ex.: "lua-7K2Q9P"). */
-    static String randomCode() {
-        String[] words = {"lua", "sol", "mar", "cine", "rio", "neon", "jazz", "noir", "pipoca", "drama"};
-        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        SecureRandom r = new SecureRandom();
-        StringBuilder sb = new StringBuilder(words[r.nextInt(words.length)]).append('-');
-        for (int i = 0; i < 6; i++) sb.append(chars.charAt(r.nextInt(chars.length())));
-        return sb.toString();
     }
 }

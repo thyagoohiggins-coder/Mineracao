@@ -1,7 +1,8 @@
 'use strict';
 const $ = (id) => document.getElementById(id);
-const DEFAULTS = { serverUrl: CINEFRASES_SERVER, syncCode: '' };
+const CODE_RE = /^[A-Za-z0-9_-]{4,64}$/;
 let es = null;
+let code = '';
 
 function randomCode() {
   const words = ['lua', 'sol', 'mar', 'cine', 'rio', 'neon', 'jazz', 'noir', 'pipoca', 'drama'];
@@ -9,15 +10,11 @@ function randomCode() {
   const a = crypto.getRandomValues(new Uint8Array(7));
   return `${words[a[0] % words.length]}-${[...a.slice(1)].map((b) => chars[b % chars.length]).join('')}`;
 }
+const api = (c) => `${CINEFRASES_SERVER}/api/rooms/${encodeURIComponent(c)}`;
 
 function setStatus(kind, label) {
-  $('status').className = `status ${kind}`;
+  $('status').className = `pill ${kind}`;
   $('status').querySelector('b').textContent = label;
-}
-
-async function config() {
-  const c = await chrome.storage.sync.get(DEFAULTS);
-  return { serverUrl: (c.serverUrl || DEFAULTS.serverUrl).replace(/\/+$/, ''), syncCode: (c.syncCode || '').trim() };
 }
 
 function fmtTime(s) {
@@ -26,6 +23,66 @@ function fmtTime(s) {
   return (h ? `${h}:${String(m).padStart(2, '0')}` : m) + `:${String(sec).padStart(2, '0')}`;
 }
 
+// ---------- Código ----------
+async function loadCode() {
+  let { syncCode } = await chrome.storage.sync.get('syncCode');
+  if (!syncCode) {
+    syncCode = randomCode();
+    await chrome.storage.sync.set({ syncCode });
+  }
+  code = syncCode;
+  $('code').textContent = code;
+}
+
+function editMode(on) {
+  $('codeView').hidden = on;
+  $('codeEdit').hidden = !on;
+  $('codeError').hidden = true;
+  if (on) { $('codeInput').value = code; $('codeInput').select(); $('codeInput').focus(); }
+}
+
+// ---------- Diagnóstico da aba ----------
+async function checkTab() {
+  const box = $('tab');
+  const set = (kind, icon, title, detail) => {
+    box.className = `tab ${kind}`;
+    $('tabIcon').textContent = icon;
+    $('tabTitle').textContent = title;
+    $('tabDetail').textContent = '';
+    if (detail instanceof Node) $('tabDetail').appendChild(detail); else $('tabDetail').textContent = detail || '';
+  };
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab || !/^https?:/.test(tab.url || '')) {
+    set('', '•', 'Abra um vídeo para começar', 'Netflix, Disney+, Max, Prime Video, YouTube…');
+    $('copyNow').hidden = true;
+    return;
+  }
+  let st = null;
+  try { st = await chrome.tabs.sendMessage(tab.id, { type: 'status' }); } catch { /* sem script na aba */ }
+  if (!st) {
+    try {
+      await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: ['content.js'] });
+      await new Promise((r) => setTimeout(r, 400));
+      st = await chrome.tabs.sendMessage(tab.id, { type: 'status' });
+    } catch { /* página protegida */ }
+  }
+  if (!st) {
+    set('', '•', 'Nenhum vídeo nesta aba', 'Dê play no vídeo e abra este menu de novo.');
+    $('copyNow').hidden = true;
+  } else if (st.subtitle) {
+    const q = document.createElement('q');
+    q.textContent = st.subtitle.length > 120 ? st.subtitle.slice(0, 120) + '…' : st.subtitle;
+    set('ok', '✓', `Legenda detectada · ${st.site}`, q);
+    $('copyNow').hidden = false;
+  } else {
+    set('warn', '!', `Vídeo encontrado · ${st.site}`, st.captured
+      ? 'Nenhuma legenda na tela agora (aparece quando alguém fala).'
+      : 'Ative as legendas (CC) no player para poder copiar as frases.');
+    $('copyNow').hidden = !st.captured;
+  }
+}
+
+// ---------- Lista ----------
 function render(phrases) {
   const list = $('list');
   list.textContent = '';
@@ -41,73 +98,82 @@ function render(phrases) {
     li.title = 'Clique para copiar';
     const t = document.createElement('span'); t.className = 't'; t.textContent = p.text;
     const m = document.createElement('span'); m.className = 'm';
-    m.textContent = [p.sourceName || p.source, p.title, fmtTime(p.videoTime), p.synced === false ? '⏳ pendente' : ''].filter(Boolean).join(' · ');
+    const meta = () => [p.sourceName || p.source, p.title, fmtTime(p.videoTime), p.synced === false ? 'envio pendente' : ''].filter(Boolean).join(' · ');
+    m.textContent = meta();
     li.append(t, m);
-    li.addEventListener('click', async () => { await navigator.clipboard.writeText(p.text); m.textContent = 'Copiado ✓'; });
+    li.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(p.text);
+      m.textContent = 'Copiada ✓';
+      setTimeout(() => { m.textContent = meta(); }, 1200);
+    });
     list.appendChild(li);
   }
 }
 
 async function refresh() {
-  const cfg = await config();
   const { recent = [], queue = [] } = await chrome.storage.local.get(['recent', 'queue']);
   $('pending').hidden = !queue.length;
   $('pending').textContent = `${queue.length} pendente${queue.length > 1 ? 's' : ''}`;
-
-  if (cfg.serverUrl.includes(CINEFRASES_PLACEHOLDER)) {
-    setStatus('warn', 'configure o servidor');
-    document.querySelector('details').open = true;
-    render(recent);
-    return;
-  }
-  if (!cfg.syncCode) { setStatus('warn', 'sem código'); render(recent); return; }
   try {
-    const r = await fetch(`${cfg.serverUrl}/api/rooms/${encodeURIComponent(cfg.syncCode)}/phrases`);
+    const r = await fetch(`${api(code)}/phrases`);
     if (!r.ok) throw new Error();
     const { phrases } = await r.json();
     setStatus('ok', 'sincronizado');
     render([...queue.map((p) => ({ ...p, synced: false })), ...phrases]);
-    listen(cfg);
+    listen();
   } catch {
-    setStatus('err', 'offline');
+    setStatus('err', 'sem conexão');
     render(recent);
   }
 }
 
-// Atualização em tempo real enquanto o popup está aberto (ex.: frase apagada no app)
-function listen(cfg) {
+// Tempo real enquanto o popup está aberto (ex.: frase apagada no app)
+function listen() {
   if (es) return;
-  es = new EventSource(`${cfg.serverUrl}/api/rooms/${encodeURIComponent(cfg.syncCode)}/stream`);
+  es = new EventSource(`${api(code)}/stream`);
   let t;
   const again = () => { clearTimeout(t); t = setTimeout(refresh, 150); };
   for (const ev of ['add', 'update', 'delete']) es.addEventListener(ev, again);
-  es.onerror = () => setStatus('err', 'offline');
+  es.onerror = () => setStatus('err', 'sem conexão');
   es.onopen = () => setStatus('ok', 'sincronizado');
 }
 
 async function init() {
-  const cfg = await config();
+  await loadCode();
   const local = await chrome.storage.local.get({ enabled: true, showButton: true });
-  $('code').value = cfg.syncCode;
-  $('server').value = cfg.serverUrl;
   $('enabled').checked = local.enabled;
   $('showButton').checked = local.showButton;
 
-  $('gen').onclick = () => { $('code').value = randomCode(); };
-  $('save').onclick = async () => {
-    const syncCode = $('code').value.trim();
-    if (syncCode && !/^[A-Za-z0-9_-]{4,64}$/.test(syncCode)) { setStatus('err', 'código inválido'); return; }
-    await chrome.storage.sync.set({ syncCode, serverUrl: ($('server').value.trim() || DEFAULTS.serverUrl).replace(/\/+$/, '') });
+  $('copyCode').onclick = async () => {
+    await navigator.clipboard.writeText(code);
+    $('copyCode').textContent = 'Copiado ✓';
+    setTimeout(() => ($('copyCode').textContent = 'Copiar'), 1200);
+  };
+  $('editCode').onclick = (e) => { e.preventDefault(); editMode(true); };
+  $('cancelEdit').onclick = () => editMode(false);
+  $('genCode').onclick = () => { $('codeInput').value = randomCode(); };
+  $('codeEdit').onsubmit = async (e) => {
+    e.preventDefault();
+    const next = $('codeInput').value.trim();
+    if (!CODE_RE.test(next)) { $('codeError').hidden = false; return; }
+    await chrome.storage.sync.set({ syncCode: next });
+    code = next;
+    $('code').textContent = code;
+    editMode(false);
     if (es) { es.close(); es = null; }
     await chrome.runtime.sendMessage({ type: 'flush' }).catch(() => {});
-    $('save').textContent = 'Salvo ✓';
-    setTimeout(() => ($('save').textContent = 'Salvar'), 1200);
     refresh();
+  };
+  $('copyNow').onclick = async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) await chrome.tabs.sendMessage(tab.id, { type: 'copy-now' }).catch(() => {});
+    setTimeout(() => window.close(), 300);
   };
   $('enabled').onchange = (e) => chrome.storage.local.set({ enabled: e.target.checked });
   $('showButton').onchange = (e) => chrome.storage.local.set({ showButton: e.target.checked });
 
   chrome.storage.onChanged.addListener((ch, area) => { if (area === 'local' && (ch.recent || ch.queue)) refresh(); });
   refresh();
+  checkTab();
 }
 init();

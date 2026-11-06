@@ -28,7 +28,7 @@ jobs:
 
       - name: Compilar APK
         working-directory: android
-        run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug
+        run: chmod +x gradlew && ./gradlew --no-daemon assembleDebug -PserverUrl=http://10.0.2.2:3000
 
       - name: Subir servidor com frases de exemplo
         run: |

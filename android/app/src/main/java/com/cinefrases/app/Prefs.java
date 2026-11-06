@@ -3,10 +3,9 @@ package com.cinefrases.app;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/** Configurações salvas no aparelho (endereço do servidor e código de sincronização). */
+/** Configurações salvas no aparelho (só o código de sincronização; o servidor é fixo). */
 public final class Prefs {
     private static final String FILE = "cinefrases";
-    private static final String KEY_SERVER = "serverUrl";
     private static final String KEY_CODE = "syncCode";
 
     private Prefs() {}
@@ -15,8 +14,9 @@ public final class Prefs {
         return c.getSharedPreferences(FILE, Context.MODE_PRIVATE);
     }
 
-    public static String serverUrl(Context c) {
-        return sp(c).getString(KEY_SERVER, "");
+    /** Endereço do servidor de sincronização (definido na compilação). */
+    public static String serverUrl() {
+        return BuildConfig.SERVER_URL;
     }
 
     public static String syncCode(Context c) {
@@ -24,10 +24,10 @@ public final class Prefs {
     }
 
     public static boolean isConfigured(Context c) {
-        return !serverUrl(c).isEmpty() && ApiClient.isValidCode(syncCode(c));
+        return ApiClient.isValidCode(syncCode(c));
     }
 
-    public static void save(Context c, String serverUrl, String code) {
-        sp(c).edit().putString(KEY_SERVER, serverUrl).putString(KEY_CODE, code).apply();
+    public static void saveCode(Context c, String code) {
+        sp(c).edit().putString(KEY_CODE, code).apply();
     }
 }

@@ -6,37 +6,43 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <header>
-    <img src="icons/icon48.png" alt="" width="28" height="28">
+  <header class="top">
+    <img src="icons/icon48.png" alt="" width="30" height="30">
     <h1>CineFrases</h1>
-    <span id="status" class="status" title="Status da sincronização"><i></i><b>…</b></span>
+    <span id="status" class="pill"><i></i><b>…</b></span>
   </header>
 
-  <section class="card">
-    <label>Código de sincronização
-      <div class="row">
-        <input id="code" placeholder="ex.: lua-7K2Q9P" autocomplete="off" spellcheck="false">
-        <button id="gen" class="ghost" title="Gerar um código novo">Gerar</button>
-      </div>
-    </label>
-    <small>Use o mesmo código no app Android para os dois ficarem sincronizados.</small>
-
-    <details>
-      <summary>Servidor</summary>
-      <label>Endereço do servidor
-        <input id="server" placeholder="https://cinefrases.SEU-USUARIO.workers.dev" spellcheck="false">
-      </label>
-      <small>O endereço do seu Worker na Cloudflare (aparece ao rodar <b>npm run deploy</b>).</small>
-    </details>
-
-    <div class="row">
-      <button id="save">Salvar</button>
+  <!-- Diagnóstico da aba atual -->
+  <section id="tab" class="tab">
+    <div class="tab-ic" id="tabIcon">•</div>
+    <div class="tab-body">
+      <strong id="tabTitle">Verificando esta aba…</strong>
+      <p id="tabDetail"></p>
     </div>
   </section>
+  <button id="copyNow" class="primary" hidden>❝ Copiar frase da tela</button>
 
-  <section class="toggles">
-    <label class="switch"><input type="checkbox" id="enabled"> <span>Extensão ativa</span></label>
-    <label class="switch"><input type="checkbox" id="showButton"> <span>Mostrar botão sobre o vídeo</span></label>
+  <!-- Código de sincronização -->
+  <section class="code-card">
+    <div class="code-view" id="codeView">
+      <span class="label">Seu código no app</span>
+      <div class="code-row">
+        <code id="code">…</code>
+        <button id="copyCode" class="chip" title="Copiar código">Copiar</button>
+      </div>
+      <p class="hint">Digite este código no app CineFrases do celular. <a href="#" id="editCode">Usar outro código</a></p>
+    </div>
+    <form class="code-edit" id="codeEdit" hidden>
+      <span class="label">Código de sincronização</span>
+      <input id="codeInput" placeholder="ex.: lua-7K2Q9P" autocomplete="off" spellcheck="false" maxlength="64">
+      <p class="hint error" id="codeError" hidden>Use de 4 a 64 letras, números, “-” ou “_”.</p>
+      <div class="row">
+        <button type="button" id="genCode" class="chip">Gerar novo</button>
+        <span class="grow"></span>
+        <button type="button" id="cancelEdit" class="chip ghost">Cancelar</button>
+        <button type="submit" class="chip solid">Salvar</button>
+      </div>
+    </form>
   </section>
 
   <section>
@@ -44,7 +50,12 @@
     <ul id="list"></ul>
   </section>
 
-  <footer><kbd>Alt</kbd>+<kbd>C</kbd> copia a frase da tela · <kbd>Alt</kbd>+<kbd>X</kbd> mostra as últimas falas</footer>
+  <section class="settings">
+    <label class="switch"><input type="checkbox" id="enabled"><span class="track"></span>Extensão ativa</label>
+    <label class="switch"><input type="checkbox" id="showButton"><span class="track"></span>Botão sobre o vídeo</label>
+  </section>
+
+  <footer><kbd>Alt</kbd> <kbd>C</kbd> copia a frase &nbsp;·&nbsp; <kbd>Alt</kbd> <kbd>X</kbd> últimas falas</footer>
   <script src="config.js"></script>
   <script src="popup.js"></script>
 </body>

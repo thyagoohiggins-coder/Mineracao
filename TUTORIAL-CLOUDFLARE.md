@@ -36,19 +36,16 @@ https://cinefrases.joao.workers.dev
 
 **Copie esse endereço.** Para conferir, abra ele no navegador: deve aparecer `"Servidor do CineFrases no ar"`.
 
-### 4. Configure a extensão
-1. Clique no ícone do **CineFrases** no navegador.
-2. Em **Servidor**, cole o endereço.
-3. Clique em **Gerar** (cria seu código, ex.: `lua-7K2Q9P`) e depois em **Salvar**.
-4. A bolinha no topo fica **verde: "sincronizado"**.
+### 4. Pronto: extensão e app já usam esse endereço
+O endereço `https://cinefrases.thyagohikins.workers.dev` já vem fixo na extensão e no app; ninguém precisa digitá-lo.
 
-### 5. Configure o app no celular
-1. Abra o app **CineFrases**.
-2. Cole o **mesmo endereço** e digite o **mesmo código** da extensão.
-3. Toque em **Conectar**.
+1. Clique no ícone do **CineFrases** no navegador e veja o seu **código** (ex.: `lua-7K2Q9P`), criado automaticamente.
+2. No app do celular, digite esse código e toque em **Conectar**.
+3. Abra um vídeo com legenda e aperte **Alt + C**. A frase aparece no celular na hora. 🎉
 
-### 6. Teste
-Abra um vídeo com legenda e aperte **Alt + C**. A frase aparece no celular na hora. 🎉
+> Não precisa criar registro de DNS. Se quiser usar um domínio próprio, depois do deploy vá em
+> *Workers & Pages → cinefrases → Settings → Domains & Routes → Add → Custom Domain* e troque o endereço em
+> `extension/config.js` e em `android/app/build.gradle` (`SERVER_URL`).
 
 ---
 
@@ -56,11 +53,7 @@ Abra um vídeo com legenda e aperte **Alt + C**. A frase aparece no celular na h
 
 **Preciso fazer isso de novo?** Não. O servidor fica no ar para sempre. Só rode `npm run deploy` de novo se alterar o código da pasta `cloudflare`.
 
-**Não quero colar o endereço toda vez que instalar.** Troque `SEU-USUARIO` pelo seu subdomínio nestes dois arquivos:
-- `extension/config.js` (extensão)
-- `android/app/src/main/res/values/config.xml` (app)
-
-**A bolinha da extensão fica vermelha ("offline").** Confira se o endereço está certo (com `https://` e sem espaço no final). As frases copiadas nesse meio-tempo não se perdem: são enviadas sozinhas quando a conexão voltar.
+**A bolinha da extensão fica vermelha ("sem conexão").** Confira se o deploy foi feito (abra o endereço no navegador). As frases copiadas nesse meio-tempo não se perdem: são enviadas sozinhas quando a conexão voltar.
 
 **Quero ver se está funcionando.** No painel da Cloudflare: *Workers & Pages* → *cinefrases* → *Logs*.
 

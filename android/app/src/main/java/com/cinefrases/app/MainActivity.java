@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
             return;
         }
         setContentView(R.layout.activity_main);
-        api = new ApiClient(Prefs.serverUrl(this), Prefs.syncCode(this));
+        api = new ApiClient(Prefs.serverUrl(), Prefs.syncCode(this));
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

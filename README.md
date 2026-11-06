@@ -35,39 +35,30 @@ Extensão e app usam o **mesmo código de sincronização** (ex.: `lua-7K2Q9P`).
 
 ---
 
-## 1. Servidor
+## 1. Servidor (Cloudflare)
 
-### Cloudflare (recomendado)
+O servidor já está publicado em **`https://cinefrases.thyagohikins.workers.dev`**, e esse endereço vem **fixo** na extensão (`extension/config.js`) e no app (`android/app/build.gradle`, campo `SERVER_URL`). O usuário não precisa configurar nada além do código.
 
-👉 **Siga o [TUTORIAL-CLOUDFLARE.md](TUTORIAL-CLOUDFLARE.md)** — são 3 comandos:
+Para publicar de novo depois de mudar o código do servidor, veja o [TUTORIAL-CLOUDFLARE.md](TUTORIAL-CLOUDFLARE.md):
 
 ```bash
 cd cloudflare
 npm install
-npx wrangler login
 npm run deploy
 ```
 
-Você recebe um endereço como `https://cinefrases.SEU-USUARIO.workers.dev`, que vai na extensão e no app.
 Cada código de sincronização vira um *Durable Object* que guarda as frases (SQLite) e mantém as conexões em tempo real.
 Testes locais (sobe o Worker com `wrangler dev`): `npm test`.
 
-### Alternativa: no seu computador (Node.js 18+)
-
-```bash
-cd server
-npm start
-```
-
-Sobe em `http://0.0.0.0:3000` e salva em `server/data/db.json`. No celular use o IP do PC (ex.: `http://192.168.0.10:3000`), na mesma rede Wi-Fi.
+> `server/` tem o mesmo servidor em Node.js, usado nos testes e nos prints automáticos.
 
 ## 2. Extensão
 
 1. Abra `chrome://extensions` (ou `edge://extensions`).
 2. Ative o **Modo do desenvolvedor**.
 3. Clique em **Carregar sem compactação** e selecione a pasta `extension/`.
-4. Clique no ícone do CineFrases → **Gerar** um código → **Salvar**.
-   Em **Servidor**, cole o endereço do seu Worker (ou fixe ele em `extension/config.js`).
+4. Clique no ícone do CineFrases: o seu **código** (ex.: `lua-7K2Q9P`) já aparece, criado automaticamente. É só digitar esse código no app.
+   O menu também mostra se a legenda da aba atual está sendo detectada.
 
 ### Como usar
 
@@ -79,10 +70,11 @@ Sobe em `http://0.0.0.0:3000` e salva em `server/data/db.json`. No celular use o
 - Funciona em tela cheia.
 - Sem internet/servidor? A frase é copiada mesmo assim e fica numa fila; é enviada automaticamente quando a conexão voltar (o número pendente aparece no ícone).
 
-Serviços suportados: **Netflix, YouTube, Disney+, Max (HBO), Prime Video, Globoplay, Paramount+, Crunchyroll, Apple TV+**, e qualquer player que use legendas nativas do HTML5.
+Serviços: **Netflix, YouTube, Disney+, Max (HBO), Prime Video, Globoplay, Paramount+, Crunchyroll, Apple TV+** e, em geral, **qualquer site com vídeo legendado**. A detecção combina seletores conhecidos de cada serviço, legendas nativas do HTML5, players dentro de *shadow DOM* e uma busca genérica por elementos de legenda sobre o vídeo.
+Se nenhuma legenda for encontrada, o Alt+C copia o texto que você tiver selecionado.
 Cada frase vai com o nome do filme/série, o serviço, o minuto do vídeo e o link (no YouTube, o link já abre no segundo exato da fala).
 
-> Os sites de streaming mudam o HTML com frequência. Se algum parar de funcionar, os seletores ficam no topo de `extension/content.js` (lista `SITES`).
+> Os sites de streaming mudam o HTML com frequência. Se algum parar de funcionar, os seletores ficam no topo de `extension/content.js` (lista `SITES`). Depois de instalar ou atualizar a extensão, as abas já abertas passam a funcionar sem precisar recarregar.
 
 ## 3. App Android (Java)
 
@@ -96,11 +88,11 @@ cd android
 ```
 
 O APK fica em `android/app/build/outputs/apk/debug/app-debug.apk`. (minSdk 26 / Android 8.0+.)
+Para apontar o app para outro servidor: `./gradlew assembleDebug -PserverUrl=https://outro-endereco`.
 
 ### Conectando o app
 
-Na primeira tela, cole o endereço do servidor (o mesmo da extensão) e o **mesmo código** de sincronização, e toque em **Conectar**.
-Para já vir preenchido, troque o endereço em `android/app/src/main/res/values/config.xml`.
+Na primeira tela, digite o **código** que aparece no ícone da extensão e toque em **Conectar**. Pronto.
 
 ### O que o app faz
 

@@ -37,12 +37,11 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -W -n $PKG/.MainActivity
 shot 01-conectar 4
 
-# 2) Configura servidor + código (o emulador enxerga o PC em 10.0.2.2)
+# 2) Configura o código (o APK dos prints aponta para o servidor local, 10.0.2.2)
 adb shell am force-stop $PKG
 cat > /tmp/cinefrases.xml <<XML
 <?xml version='1.0' encoding='utf-8' standalone='yes' ?>
 <map>
-    <string name="serverUrl">http://10.0.2.2:3000</string>
     <string name="syncCode">lua-7K2Q9P</string>
 </map>
 XML
