@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>CineFrases</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" alt="" width="28" height="28">
+    <h1>CineFrases</h1>
+    <span id="status" class="status" title="Status da sincronização"><i></i><b>…</b></span>
+  </header>
+
+  <section class="card">
+    <label>Código de sincronização
+      <div class="row">
+        <input id="code" placeholder="ex.: lua-7K2Q9P" autocomplete="off" spellcheck="false">
+        <button id="gen" class="ghost" title="Gerar um código novo">Gerar</button>
+      </div>
+    </label>
+    <small>Use o mesmo código no app Android para os dois ficarem sincronizados.</small>
+
+    <details>
+      <summary>Avançado</summary>
+      <label>Endereço do servidor
+        <input id="server" placeholder="http://localhost:3000" spellcheck="false">
+      </label>
+      <small>No celular, use o IP do computador na rede (ex.: http://192.168.0.10:3000).</small>
+    </details>
+
+    <div class="row">
+      <button id="save">Salvar</button>
+    </div>
+  </section>
+
+  <section class="toggles">
+    <label class="switch"><input type="checkbox" id="enabled"> <span>Extensão ativa</span></label>
+    <label class="switch"><input type="checkbox" id="showButton"> <span>Mostrar botão sobre o vídeo</span></label>
+  </section>
+
+  <section>
+    <h2>Últimas frases <span id="pending" class="pending" hidden></span></h2>
+    <ul id="list"></ul>
+  </section>
+
+  <footer><kbd>Alt</kbd>+<kbd>C</kbd> copia a frase da tela · <kbd>Alt</kbd>+<kbd>X</kbd> mostra as últimas falas</footer>
+  <script src="popup.js"></script>
+</body>
+</html>
