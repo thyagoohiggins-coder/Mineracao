@@ -101,6 +101,13 @@ Na primeira tela, digite o **código** que aparece no ícone da extensão e toqu
 - Copiar, favoritar ★, abrir o vídeo no ponto da fala, compartilhar e apagar (com **Desfazer**).
 - Exportar/compartilhar a lista inteira.
 - Guarda uma cópia local: abre e mostra as frases mesmo sem conexão.
+- **Leitor de imagens** (botão *Ler imagem*): tira a frase de um print, foto da câmera ou imagem compartilhada de outro app (*Compartilhar → Salvar frase do print*).
+  - Reconhecimento de texto (OCR) **no próprio celular**, sem internet (Google ML Kit, modelo embutido no APK).
+  - **Detecta a legenda sozinha** (texto centralizado na parte de baixo do print) e ignora ruído como relógio e bateria.
+  - Toque ou **arraste** sobre as linhas para escolher o texto; **pinça com dois dedos** para dar zoom; botão para **girar** a imagem.
+  - Limpa o texto: junta linhas quebradas, desfaz hifenização (“fá-” + “cil” → “fácil”), remove ♪ e marcações `<i>`, corrige `|` lido no lugar de `l`.
+  - Texto editável antes de salvar, campo de filme/série (lembrado para o próximo print) e opção de salvar **cada bloco como uma frase separada**.
+  - A frase entra na lista com a etiqueta *Imagem* e é sincronizada com a extensão como qualquer outra.
 
 ## API do servidor
 

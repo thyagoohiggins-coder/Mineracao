@@ -25,7 +25,7 @@
     <string name="filter_all">Todas</string>
     <string name="filter_favorites">Favoritas</string>
     <string name="empty_title">Nenhuma frase ainda</string>
-    <string name="empty_body">No computador, abra um vídeo com legendas e pressione Alt+C. A frase aparece aqui na hora.</string>
+    <string name="empty_body">No computador, abra um vídeo com legendas e pressione Alt+C. A frase aparece aqui na hora. Ou toque em Ler imagem para tirar a frase de um print ou foto.</string>
     <string name="no_results">Nenhuma frase encontrada para este filtro.</string>
     <plurals name="phrase_count">
         <item quantity="one">%d frase</item>
@@ -48,8 +48,50 @@
     <string name="nothing_to_export">Nada para exportar.</string>
 
     <string name="menu_refresh">Atualizar</string>
+    <string name="menu_read_image">Ler imagem</string>
     <string name="menu_export">Exportar lista</string>
     <string name="menu_change_code">Trocar código</string>
     <string name="menu_about">Sobre</string>
     <string name="about_msg">Estudos Plus %1$s\n\nSalve frases de filmes, séries e vídeos com a extensão do navegador e revise tudo aqui.</string>
+
+    <!-- Leitor de imagens -->
+    <string name="back">Voltar</string>
+    <string name="reader_title">Ler imagem</string>
+    <string name="reader_share_label">Salvar frase do print</string>
+    <string name="reader_fab">Ler imagem</string>
+    <string name="reader_status_empty">Tire a frase de um print ou foto</string>
+    <string name="reader_status_reading">Lendo o texto…</string>
+    <string name="reader_status_none">Nenhum texto encontrado</string>
+    <string name="reader_status_failed">Não foi possível ler o texto. Tente girar a imagem.</string>
+    <plurals name="reader_status_lines">
+        <item quantity="one">%1$d linha encontrada · %2$d escolhida(s)</item>
+        <item quantity="other">%1$d linhas encontradas · %2$d escolhida(s)</item>
+    </plurals>
+    <string name="reader_pick_title">Escolha um print ou foto</string>
+    <string name="reader_pick_body">O texto é lido no próprio celular, sem internet. A legenda é detectada sozinha.</string>
+    <string name="reader_gallery">Galeria</string>
+    <string name="reader_camera">Câmera</string>
+    <string name="reader_rotate">Girar imagem</string>
+    <string name="reader_select_all">Selecionar tudo</string>
+    <string name="reader_hint">Toque ou arraste sobre as linhas para escolher o texto. Use dois dedos para dar zoom.</string>
+    <string name="reader_hint_auto">Legenda detectada. Toque ou arraste nas linhas para ajustar; dois dedos dão zoom.</string>
+    <string name="reader_hint_none">Nenhum texto reconhecido. Gire a imagem ou digite a frase abaixo.</string>
+    <string name="reader_phrase_hint">Frase</string>
+    <string name="reader_title_hint">Filme, série ou livro (opcional)</string>
+    <string name="reader_split">Salvar cada bloco como uma frase separada</string>
+    <string name="reader_other_image">Outra imagem</string>
+    <string name="reader_add">Adicionar frase</string>
+    <string name="reader_add_many">Adicionar %1$d frases</string>
+    <string name="reader_source_name">Imagem</string>
+    <plurals name="reader_added">
+        <item quantity="one">%d frase adicionada</item>
+        <item quantity="other">%d frases adicionadas</item>
+    </plurals>
+    <plurals name="reader_added_partial">
+        <item quantity="one">Só %d frase foi salva. Sem conexão com o servidor.</item>
+        <item quantity="other">Só %d frases foram salvas. Sem conexão com o servidor.</item>
+    </plurals>
+    <string name="reader_error_image">Não foi possível abrir esta imagem.</string>
+    <string name="reader_no_camera">Nenhum app de câmera disponível.</string>
+    <string name="reader_need_code">Conecte o app com o seu código antes de salvar frases.</string>
 </resources>

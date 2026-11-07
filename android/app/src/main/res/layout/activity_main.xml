@@ -159,7 +159,7 @@
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
                 android:paddingHorizontal="16dp"
-                android:paddingBottom="32dp" />
+                android:paddingBottom="96dp" />
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <!-- Estado vazio -->
@@ -199,5 +199,15 @@
                 android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
+
+        <!-- Leitor de imagens -->
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/readImageFab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:text="@string/reader_fab"
+            app:icon="@drawable/ic_scan" />
     </FrameLayout>
 </LinearLayout>
