@@ -80,6 +80,12 @@
     <string name="reader_title_hint">Filme, série ou livro (opcional)</string>
     <string name="reader_split">Salvar cada bloco como uma frase separada</string>
     <string name="reader_other_image">Outra imagem</string>
+    <string name="reader_new_photo">Nova foto</string>
+    <string name="reader_remove">Remover foto</string>
+    <string name="reader_removed">Foto removida</string>
+    <string name="reader_view_list">Ver lista</string>
+    <string name="reader_status_refining">Lendo a legenda com zoom…</string>
+    <string name="reader_saved_hint">Salvo! Escolha outras linhas, tire uma nova foto ou volte para a lista.</string>
     <string name="reader_add">Adicionar frase</string>
     <string name="reader_add_many">Adicionar %1$d frases</string>
     <string name="reader_source_name">Imagem</string>

@@ -106,6 +106,9 @@ Na primeira tela, digite o **código** que aparece no ícone da extensão e toqu
   - **Detecta a legenda sozinha** (texto centralizado na parte de baixo do print) e ignora ruído como relógio e bateria.
   - Toque ou **arraste** sobre as linhas para escolher o texto; **pinça com dois dedos** para dar zoom; botão para **girar** a imagem.
   - Limpa o texto: junta linhas quebradas, desfaz hifenização (“fá-” + “cil” → “fácil”), remove ♪ e marcações `<i>`, corrige `|` lido no lugar de `l`.
+  - **Segunda leitura com zoom** só da legenda: recorta e amplia o trecho antes de ler de novo — bem mais preciso em foto da TV.
+  - Junta as duas linhas da legenda numa frase só e arruma diálogos (`-Why?` lido como `FWhy?` → `- Why?`).
+  - Botões para **remover a foto** e **tirar nova foto**; depois de salvar, o leitor continua aberto (com atalho *Ver lista*) e não perde a foto se o Android fechar o app enquanto a câmera está aberta.
   - Texto editável antes de salvar, campo de filme/série (lembrado para o próximo print) e opção de salvar **cada bloco como uma frase separada**.
   - A frase entra na lista com a etiqueta *Imagem* e é sincronizada com a extensão como qualquer outra.
 

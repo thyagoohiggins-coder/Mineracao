@@ -39,10 +39,24 @@ public final class OcrText {
             Line l = lines.get(i);
             boolean low = l.centerY() >= imageHeight * 0.55f;
             boolean centered = Math.abs(l.centerX() - imageWidth / 2f) <= imageWidth * 0.18f;
-            boolean notTiny = (l.right - l.left) >= imageWidth * 0.08f;
+            boolean notTiny = (l.right - l.left) >= imageWidth * 0.03f;
             if (low && centered && notTiny && isMeaningful(l.text)) {
                 sel[i] = true;
                 any = true;
+            }
+        }
+        // Linhas coladas numa legenda já detectada fazem parte dela (ex.: "-Why?" curtinho em cima)
+        for (boolean grew = any; grew; ) {
+            grew = false;
+            for (int i = 0; i < lines.size(); i++) {
+                if (sel[i] || !isMeaningful(lines.get(i).text)) continue;
+                for (int j = 0; j < lines.size(); j++) {
+                    if (sel[j] && adjacent(lines.get(i), lines.get(j))) {
+                        sel[i] = true;
+                        grew = true;
+                        break;
+                    }
+                }
             }
         }
         if (!any && lines.size() <= 4) {
@@ -61,29 +75,56 @@ public final class OcrText {
     }
 
     /**
-     * Junta as linhas escolhidas em texto. Linhas do mesmo bloco viram uma frase só; blocos diferentes
-     * ficam separados por uma linha em branco (o usuário pode salvar cada bloco como uma frase).
+     * Junta as linhas escolhidas em texto. Linhas do mesmo bloco, ou coladas uma embaixo da outra (as duas
+     * linhas de uma legenda, que o OCR costuma separar em blocos), viram uma frase só. Trechos distantes
+     * ficam separados por uma linha em branco (o usuário pode salvar cada um como uma frase).
      */
     public static String compose(List<Line> lines, boolean[] selected) {
-        List<List<String>> groups = new ArrayList<>();
-        int lastBlock = Integer.MIN_VALUE;
+        List<List<Line>> groups = new ArrayList<>();
+        Line prev = null;
         for (int i = 0; i < lines.size(); i++) {
             if (i >= selected.length || !selected[i]) continue;
             Line l = lines.get(i);
-            if (l.block != lastBlock || groups.isEmpty()) {
-                groups.add(new ArrayList<>());
-                lastBlock = l.block;
-            }
-            groups.get(groups.size() - 1).add(l.text);
+            if (prev == null || !(l.block == prev.block || adjacent(prev, l))) groups.add(new ArrayList<>());
+            groups.get(groups.size() - 1).add(l);
+            prev = l;
         }
         StringBuilder sb = new StringBuilder();
-        for (List<String> g : groups) {
-            String phrase = joinLines(g);
+        for (List<Line> g : groups) {
+            String phrase = joinLines(fixDialogue(g));
             if (phrase.isEmpty()) continue;
             if (sb.length() > 0) sb.append("\n\n");
             sb.append(phrase);
         }
         return sb.toString();
+    }
+
+    /** Duas linhas uma logo abaixo da outra e alinhadas na horizontal (mesma legenda/parágrafo). */
+    static boolean adjacent(Line a, Line b) {
+        Line top = a.top <= b.top ? a : b, bottom = top == a ? b : a;
+        float h = Math.max(a.bottom - a.top, b.bottom - b.top);
+        float gap = bottom.top - top.bottom;
+        float overlap = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        return gap < h * 0.9f && gap > -h * 0.6f && overlap > -h;
+    }
+
+    private static final String DASH_START = "^\\s*[-\u2010-\u2015\u2212]";
+
+    /**
+     * Legenda de diálogo ("-Por quê?" / "-Porque..."): o travessão do começo da linha às vezes é lido
+     * como letra ("FWhy?", "EPor quê?"). Se outra linha do mesmo trecho começa com travessão, troca essa
+     * letra solta (maiúscula colada em outra maiúscula seguida de minúscula) por travessão.
+     */
+    static List<String> fixDialogue(List<Line> group) {
+        List<String> out = new ArrayList<>(group.size());
+        boolean dialogue = false;
+        for (Line l : group) if (l.text.matches(DASH_START + ".*")) dialogue = true;
+        for (Line l : group) {
+            String t = l.text;
+            if (dialogue) t = t.replaceFirst("^\\s*[A-Za-z1!|](?=\\p{Lu}\\p{Ll})", "-");
+            out.add(t);
+        }
+        return out;
     }
 
     /** Junta linhas quebradas: desfaz hifenização no fim da linha e limpa marcas de legenda. */
@@ -115,6 +156,7 @@ public final class OcrText {
         s = s.replaceAll("(?<=\\p{L})\\|(?=\\p{L})", "l"); // pa|avra → palavra
         s = s.replaceAll("^\\|\\s", "I ");                 // "| don't" → "I don't"
         s = s.replaceAll("\\s+([,.!?;:])", "$1");           // "olá ," → "olá,"
+        s = s.replaceFirst(DASH_START + "+\\s*", "- ");     // "-Por quê?" → "- Por quê?"
         s = s.replaceAll("\\s+", " ").trim();
         return s;
     }
