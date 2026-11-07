@@ -100,6 +100,17 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
 
         swipe.setOnRefreshListener(this::reload);
 
+        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton fab = findViewById(R.id.readImageFab);
+        fab.setOnClickListener(v -> openImageReader());
+        // Encolhe o botão ao rolar a lista para não cobrir as frases
+        recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView rv, int dx, int dy) {
+                if (dy > 6 && fab.isExtended()) fab.shrink();
+                else if (dy < -6 && !fab.isExtended()) fab.extend();
+            }
+        });
+
         EditText search = findViewById(R.id.searchInput);
         search.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
@@ -390,8 +401,16 @@ public class MainActivity extends AppCompatActivity implements SseClient.Listene
 
     // ---------- Menu ----------
 
+    private void openImageReader() {
+        startActivity(new Intent(this, ImageReaderActivity.class));
+    }
+
     private boolean onMenuItem(MenuItem item) {
         int id = item.getItemId();
+        if (id == R.id.action_read_image) {
+            openImageReader();
+            return true;
+        }
         if (id == R.id.action_refresh) {
             swipe.setRefreshing(true);
             reload();

@@ -126,6 +126,7 @@ public class PhraseAdapter extends RecyclerView.Adapter<PhraseAdapter.Holder> {
             case "paramount": return Color.parseColor("#2563EB");
             case "crunchyroll": return Color.parseColor("#F47521");
             case "appletv": return Color.parseColor("#64748B");
+            case "imagem": return Color.parseColor("#0D9488");
             default: return Color.parseColor("#64748B");
         }
     }

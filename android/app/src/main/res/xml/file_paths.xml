@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Fotos tiradas pela câmera para o leitor de imagens -->
+    <cache-path name="images" path="images/" />
+</paths>

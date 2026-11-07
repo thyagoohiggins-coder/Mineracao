@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 public final class Prefs {
     private static final String FILE = "estudosplus";
     private static final String KEY_CODE = "syncCode";
+    private static final String KEY_READER_TITLE = "readerTitle";
 
     private Prefs() {}
 
@@ -29,5 +30,14 @@ public final class Prefs {
 
     public static void saveCode(Context c, String code) {
         sp(c).edit().putString(KEY_CODE, code).apply();
+    }
+
+    /** Último filme/série informado no leitor de imagens (para não digitar de novo a cada print). */
+    public static String readerTitle(Context c) {
+        return sp(c).getString(KEY_READER_TITLE, "");
+    }
+
+    public static void saveReaderTitle(Context c, String title) {
+        sp(c).edit().putString(KEY_READER_TITLE, title).apply();
     }
 }
