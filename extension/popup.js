@@ -84,7 +84,13 @@ function render(phrases) {
     const m = document.createElement('span'); m.className = 'm';
     const meta = () => [p.sourceName || p.source, p.title, fmtTime(p.videoTime), p.synced === false ? 'envio pendente' : ''].filter(Boolean).join(' · ');
     m.textContent = meta();
-    li.append(t, m);
+    const del = document.createElement('button');
+    del.className = 'del';
+    del.title = 'Apagar frase';
+    del.setAttribute('aria-label', 'Apagar frase');
+    del.innerHTML = '<svg><use href="#i-trash"/></svg>';
+    del.addEventListener('click', (e) => { e.stopPropagation(); removePhrase(p, li); });
+    li.append(t, m, del);
     li.addEventListener('click', async () => {
       await navigator.clipboard.writeText(p.text);
       m.textContent = 'Copiada';
@@ -92,6 +98,73 @@ function render(phrases) {
       setTimeout(() => { m.textContent = meta(); m.classList.remove('copied'); }, 1200);
     });
     list.appendChild(li);
+  }
+}
+
+// ---------- Apagar (com Desfazer) ----------
+let undoTimer;
+function showUndo(p) {
+  clearTimeout(undoTimer);
+  $('undoMsg').textContent = 'Frase apagada';
+  $('undoBtn').hidden = false;
+  $('undoBar').hidden = false;
+  $('undoBtn').onclick = () => { $('undoBar').hidden = true; restorePhrase(p); };
+  undoTimer = setTimeout(() => ($('undoBar').hidden = true), 6000);
+}
+
+function showError(msg) {
+  clearTimeout(undoTimer);
+  $('undoMsg').textContent = msg;
+  $('undoBtn').hidden = true;
+  $('undoBar').hidden = false;
+  undoTimer = setTimeout(() => { $('undoBar').hidden = true; $('undoMsg').textContent = 'Frase apagada'; $('undoBtn').hidden = false; }, 3000);
+}
+
+async function dropLocal(id) {
+  const { recent = [], queue = [] } = await chrome.storage.local.get(['recent', 'queue']);
+  const q = queue.filter((x) => x.id !== id);
+  await chrome.storage.local.set({ recent: recent.filter((x) => x.id !== id), queue: q });
+  chrome.action.setBadgeText({ text: q.length ? String(q.length) : '' });
+}
+
+async function removePhrase(p, li) {
+  li.classList.add('removing');
+  try {
+    if (p.synced !== false) {
+      const r = await fetch(`${api(code)}/phrases/${encodeURIComponent(p.id)}`, { method: 'DELETE' });
+      if (!r.ok && r.status !== 404) throw new Error();
+    }
+    await dropLocal(p.id); // dispara refresh() via storage.onChanged
+    li.remove();
+    showUndo(p);
+  } catch {
+    li.classList.remove('removing');
+    showError('Sem conexão — não foi possível apagar');
+  }
+}
+
+async function restorePhrase(p) {
+  const { synced, ...phrase } = p;
+  try {
+    if (synced === false) throw new Error('local');
+    const r = await fetch(`${api(code)}/phrases`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(phrase),
+    });
+    if (!r.ok) throw new Error();
+    if (p.favorite || p.note) {
+      await fetch(`${api(code)}/phrases/${encodeURIComponent(p.id)}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ favorite: !!p.favorite, note: p.note || '' }),
+      });
+    }
+    refresh();
+  } catch {
+    // Offline (ou era só local): volta para a fila e é enviada depois
+    const { queue = [] } = await chrome.storage.local.get('queue');
+    if (!queue.some((x) => x.id === p.id)) queue.unshift(phrase);
+    await chrome.storage.local.set({ queue });
+    chrome.action.setBadgeText({ text: String(queue.length) });
+    chrome.runtime.sendMessage({ type: 'flush' }).catch(() => {});
   }
 }
 

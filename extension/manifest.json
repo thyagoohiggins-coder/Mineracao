@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Estudos Plus",
   "short_name": "Estudos Plus",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Salve a legenda que está na tela com um clique ou Alt+C (Netflix, Disney+, Max, Prime Video, YouTube e mais) e revise no app Estudos Plus.",
   "permissions": [
     "storage",
