@@ -67,6 +67,7 @@ Testes locais (sobe o Worker com `wrangler dev`): `npm test`.
 - Ou passe o mouse sobre o vídeo e use o botão **❝ Copiar frase**.
 - Também existe o atalho global `Alt + Shift + C` (configurável em `chrome://extensions/shortcuts`).
 - Funciona em tela cheia.
+- No menu da extensão, passe o mouse sobre uma frase e clique na **lixeira** para apagá-la (some também do app). Apagou sem querer? Clique em **Desfazer**.
 - Sem internet/servidor? A frase é copiada mesmo assim e fica numa fila; é enviada automaticamente quando a conexão voltar (o número pendente aparece no ícone).
 
 Serviços: **Netflix, YouTube, Disney+, Max (HBO), Prime Video, Globoplay, Paramount+, Crunchyroll, Apple TV+** e, em geral, **qualquer site com vídeo legendado**. A detecção combina seletores conhecidos de cada serviço, legendas nativas do HTML5, players dentro de *shadow DOM* e uma busca genérica por elementos de legenda sobre o vídeo.
